@@ -7,6 +7,7 @@ import {
   Plugin,
   PluginSettingTab,
   Setting,
+  type SettingDefinitionItem,
 } from 'obsidian';
 
 import {
@@ -197,13 +198,45 @@ export default class TextFormatPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    // `loadData()` is typed `any`, and whatever is on disk was written by
+    // some earlier version of this plugin, so it is read as `unknown` and
+    // narrowed before it is merged over the defaults.
+    const stored = (await this.loadData()) as Partial<TextFormatSettings> | null;
+    this.settings = { ...DEFAULT_SETTINGS, ...stored };
   }
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
   }
 }
+
+/**
+ * Each setting's name and description, written once. The declarative
+ * definitions below and the `display()` fallback both read from here, so the
+ * two renderings cannot drift apart.
+ */
+const SETTING_TEXT: Record<keyof TextFormatSettings, { name: string; desc: string }> = {
+  locale: {
+    name: 'Language rules',
+    desc: 'Turkish and Azerbaijani map the dotted and dotless i differently from every other language.',
+  },
+  preserveAcronyms: {
+    name: 'Keep acronyms as they are',
+    desc: 'Leaves runs like NASA and PDF alone. Ignored when the whole selection is already uppercase, since then every word looks like an acronym.',
+  },
+  stopWords: {
+    name: 'Words title case keeps lowercase',
+    desc: 'Comma separated. The first and last word of a title are always capitalized, whatever this list says.',
+  },
+  removeHyphenOnJoin: {
+    name: 'Drop the hyphen when joining lines',
+    desc: 'A PDF breaks a word as "trans-" and "lation". Turn this off for text where a real compound such as "well-known" is likelier than a broken word.',
+  },
+  keepImageAltText: {
+    name: 'Keep image alt text',
+    desc: 'Leaves the description behind when an image is turned into plain text, rather than removing the image entirely.',
+  },
+};
 
 class TextFormatSettingTab extends PluginSettingTab {
   private plugin: TextFormatPlugin;
@@ -213,6 +246,90 @@ class TextFormatSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
+  /**
+   * The settings, described rather than drawn.
+   *
+   * Obsidian 1.13 and later renders this itself and, the reason for writing
+   * it, indexes it so the settings turn up in the settings search. Older
+   * versions know nothing about this method and fall back to `display()`.
+   */
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [
+      {
+        type: 'group',
+        heading: 'Case',
+        items: [
+          {
+            ...SETTING_TEXT.locale,
+            control: {
+              type: 'dropdown',
+              key: 'locale',
+              options: LOCALES,
+              defaultValue: DEFAULT_SETTINGS.locale,
+            },
+          },
+          {
+            ...SETTING_TEXT.preserveAcronyms,
+            control: {
+              type: 'toggle',
+              key: 'preserveAcronyms',
+              defaultValue: DEFAULT_SETTINGS.preserveAcronyms,
+            },
+          },
+          {
+            ...SETTING_TEXT.stopWords,
+            control: {
+              type: 'textarea',
+              key: 'stopWords',
+              placeholder: DEFAULT_STOP_WORDS.join(', '),
+              // The list is a sentence's worth of text, not one word.
+              rows: 4,
+              defaultValue: DEFAULT_SETTINGS.stopWords,
+            },
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: 'Cleanup',
+        items: [
+          {
+            ...SETTING_TEXT.removeHyphenOnJoin,
+            control: {
+              type: 'toggle',
+              key: 'removeHyphenOnJoin',
+              defaultValue: DEFAULT_SETTINGS.removeHyphenOnJoin,
+            },
+          },
+          {
+            ...SETTING_TEXT.keepImageAltText,
+            control: {
+              type: 'toggle',
+              key: 'keepImageAltText',
+              defaultValue: DEFAULT_SETTINGS.keepImageAltText,
+            },
+          },
+        ],
+      },
+    ];
+  }
+
+  /**
+   * Persists a change made through a declarative control.
+   *
+   * The inherited version writes to `plugin.settings` too, but routing it
+   * through `saveSettings()` keeps one path to disk for both renderings.
+   */
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    Object.assign(this.plugin.settings, { [key]: value });
+    await this.plugin.saveSettings();
+  }
+
+  /**
+   * The pre-1.13 rendering. Obsidian skips this entirely once
+   * `getSettingDefinitions()` returns anything, so it is dead code on a
+   * current app and only runs for users below the 1.13 line.
+   */
   display(): void {
     const { containerEl } = this;
     const settings = this.plugin.settings;
@@ -221,8 +338,8 @@ class TextFormatSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName('Case').setHeading();
 
     new Setting(containerEl)
-      .setName('Language rules')
-      .setDesc('Turkish and Azerbaijani map the dotted and dotless i differently from every other language.')
+      .setName(SETTING_TEXT.locale.name)
+      .setDesc(SETTING_TEXT.locale.desc)
       .addDropdown((dropdown) => {
         for (const [value, label] of Object.entries(LOCALES)) dropdown.addOption(value, label);
 
@@ -233,8 +350,8 @@ class TextFormatSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName('Keep acronyms as they are')
-      .setDesc('Leaves runs like NASA and PDF alone. Ignored when the whole selection is already uppercase, since then every word looks like an acronym.')
+      .setName(SETTING_TEXT.preserveAcronyms.name)
+      .setDesc(SETTING_TEXT.preserveAcronyms.desc)
       .addToggle((toggle) => toggle
         .setValue(settings.preserveAcronyms)
         .onChange(async (value) => {
@@ -243,8 +360,8 @@ class TextFormatSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName('Words title case keeps lowercase')
-      .setDesc('Comma separated. The first and last word of a title are always capitalized, whatever this list says.')
+      .setName(SETTING_TEXT.stopWords.name)
+      .setDesc(SETTING_TEXT.stopWords.desc)
       .addTextArea((text) => {
         text.inputEl.addClass('text-format-stop-words');
 
@@ -260,8 +377,8 @@ class TextFormatSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName('Cleanup').setHeading();
 
     new Setting(containerEl)
-      .setName('Drop the hyphen when joining lines')
-      .setDesc('A PDF breaks a word as "trans-" and "lation". Turn this off for text where a real compound such as "well-known" is likelier than a broken word.')
+      .setName(SETTING_TEXT.removeHyphenOnJoin.name)
+      .setDesc(SETTING_TEXT.removeHyphenOnJoin.desc)
       .addToggle((toggle) => toggle
         .setValue(settings.removeHyphenOnJoin)
         .onChange(async (value) => {
@@ -270,8 +387,8 @@ class TextFormatSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName('Keep image alt text')
-      .setDesc('Leaves the description behind when an image is turned into plain text, rather than removing the image entirely.')
+      .setName(SETTING_TEXT.keepImageAltText.name)
+      .setDesc(SETTING_TEXT.keepImageAltText.desc)
       .addToggle((toggle) => toggle
         .setValue(settings.keepImageAltText)
         .onChange(async (value) => {

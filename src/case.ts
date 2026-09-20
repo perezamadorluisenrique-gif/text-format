@@ -46,7 +46,7 @@ export const DEFAULT_STOP_WORDS = [
  * Group 1 is that prefix, group 2 is the text the command actually works on.
  */
 const LINE_PREFIX =
-  /^([ \t]*(?:>[ \t]*)*(?:(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX\/\-][ \t]*\][ \t]+)?|#{1,6}[ \t]+)?)([\s\S]*)$/;
+  /^([ \t]*(?:>[ \t]*)*(?:(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX/-][ \t]*\][ \t]+)?|#{1,6}[ \t]+)?)([\s\S]*)$/;
 
 const FENCE = /^[ \t]*(?:```|~~~)/;
 
