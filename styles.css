@@ -1,0 +1,7 @@
+/* The stop word list is a sentence's worth of text, not a single word, so it
+   gets the full width of the settings row instead of the default short box. */
+.text-format-stop-words {
+  width: 100%;
+  min-height: 5em;
+  resize: vertical;
+}
