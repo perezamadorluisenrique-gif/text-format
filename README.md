@@ -9,11 +9,14 @@ give it, and each one is a single undo step.
 
 ## Installing
 
-Not in the community directory yet. Until it is, install it by hand:
+Once the plugin is in the community directory: Settings -> Community plugins ->
+Browse, search for it, then install and enable it.
+
+It is not there yet, so until then install it by hand:
 
 1. Download `main.js`, `manifest.json` and `styles.css` from the
    [latest release](https://github.com/perezamadorluisenrique-gif/text-format/releases/latest).
-2. Put the three files in `YourVault/.obsidian/plugins/text-format/`.
+2. Put the three files in `<your vault>/.obsidian/plugins/text-format/`.
 3. Reload Obsidian and turn the plugin on under Settings -> Community plugins.
 
 It needs Obsidian 1.0.0 or newer, and works on desktop and mobile alike.
