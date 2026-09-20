@@ -1,0 +1,36 @@
+# Changelog
+
+The release workflow uses the section named after the version being released
+as the release description, so every version needs one. `npm version <x.y.z>`
+renames the `Unreleased` heading below to that version.
+
+## Unreleased
+
+- Settings are now described with Obsidian 1.13's declarative settings API, so
+  they turn up when you search the settings window. The settings themselves,
+  and what they do, are unchanged.
+- Replaced the `builtin-modules` build dependency with Node's own
+  `module.builtinModules`. The plugin itself is unaffected.
+- Tidied three regular expressions: redundant escapes in the checkbox pattern,
+  and the invisible characters in the cleanup command written as escapes
+  rather than as themselves. All three match exactly what they matched before.
+- Added linting to the build, and release assets now carry a GitHub build
+  provenance attestation.
+
+## 0.1.0
+
+First release.
+
+Eleven commands for the selection, or the current line when nothing is
+selected.
+
+Case: uppercase, lowercase, title case, sentence case, capitalize each word,
+capitalize sentences leaving the rest alone, and cycle between them. Turkish,
+Azerbaijani and Lithuanian casing rules are available, acronyms can be left
+alone, and the words title case keeps lowercase are editable.
+
+Cleanup: join wrapped lines, rejoin words split across a line break,
+remove invisible characters, and turn links into plain text.
+
+Every command runs as a single undo step and rewrites only the ranges it
+changes, so folds, the scroll position and multiple cursors survive.

@@ -29,7 +29,7 @@ const STRUCTURAL = /^[ \t]*(?:#{1,6}[ \t]|={2,}[ \t]*$|-{3,}[ \t]*$|\*{3,}[ \t]*
 
 /** Quote markers, then a bullet or ordered marker, then an optional checkbox. */
 const LINE_PREFIX =
-  /^([ \t]*(?:>[ \t]*)*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX\/\-][ \t]*\][ \t]+)?|#{1,6}[ \t]+)?([\s\S]*)$/;
+  /^([ \t]*(?:>[ \t]*)*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX/-][ \t]*\][ \t]+)?|#{1,6}[ \t]+)?([\s\S]*)$/;
 
 /** A markdown hard line break: two trailing spaces, or a trailing backslash. */
 const HARD_BREAK = /(?:[ \t]{2}|\\)$/;
@@ -143,8 +143,10 @@ export function removeLineHyphenation(text: string): string {
 export function removeInvisibles(text: string): string {
   return text
     .replace(/\r\n?/g, '\n')
-    .replace(/[­​‌‍⁠﻿]/g, '')
-    .replace(/[  -    ]/g, ' ');
+    // Written as escapes, with the zero-width joiner last, so the characters
+    // stay visible in a diff and the class is not read as a joined sequence.
+    .replace(/[\u00AD\u200B\u200C\u2060\uFEFF\u200D]/g, '')
+    .replace(/[\u00A0\u2000-\u200A\u2007\u202F\u205F]/g, ' ');
 }
 
 /**
