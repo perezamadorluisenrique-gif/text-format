@@ -1,0 +1,22 @@
+# Proves the repo builds and passes its tests from a clean install, which is
+# what the release workflow will do later against a tag.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # 22 and no lower: the tests run `node --test` straight on .ts files.
+          node-version: '22'
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
