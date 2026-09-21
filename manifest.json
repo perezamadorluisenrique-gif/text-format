@@ -1,7 +1,7 @@
 {
   "id": "text-format",
   "name": "Text Case and Cleanup",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "1.0.0",
   "description": "Converts the selection between upper, lower, title, sentence and capitalized case, or cycles through them. Also joins wrapped lines, rejoins words split across a line break, strips invisible characters and turns links into plain text.",
   "author": "Siulved54",
