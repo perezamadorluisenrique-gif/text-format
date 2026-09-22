@@ -9,10 +9,10 @@ give it, and each one is a single undo step.
 
 ## Installing
 
-Once the plugin is in the community directory: Settings -> Community plugins ->
-Browse, search for it, then install and enable it.
+From the community directory: Settings -> Community plugins -> Browse, search
+for Text Case and Cleanup, then install and enable it.
 
-It is not there yet, so until then install it by hand:
+To install it by hand instead:
 
 1. Download `main.js`, `manifest.json` and `styles.css` from the
    [latest release](https://github.com/perezamadorluisenrique-gif/text-format/releases/latest).
@@ -116,6 +116,16 @@ Obsidian, so it runs and is tested under plain Node. `main.ts` is the only file
 that talks to the editor, and it edits by range inside one
 `editor.transaction`, so a command is one undo step and never replaces the
 document.
+
+## More plugins by Siulved54
+
+| Plugin | What it does | Source |
+| --- | --- | --- |
+| [Shared Blocks](https://obsidian.md/plugins?id=shared-blocks) | Write a block of text once and reuse it in any note. Edit the source and every reference re-renders live. | [shared-blocks](https://github.com/perezamadorluisenrique-gif/shared-blocks) |
+| [Typography as You Type](https://obsidian.md/plugins?id=typography-as-you-type) | Curly quotes, dashes and ellipses as you type, kept out of code and maths, with Backspace to take one back. | [smart-typography-plugin](https://github.com/perezamadorluisenrique-gif/smart-typography-plugin) |
+
+Both are in the community directory: Settings -> Community plugins -> Browse,
+then search for the name.
 
 ## Licence
 
