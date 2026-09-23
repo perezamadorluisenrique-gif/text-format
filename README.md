@@ -12,6 +12,8 @@ Everything runs on the text in front of you. There is no network access, no
 telemetry and no paste hook: a command only ever touches the selection you
 give it, and each one is a single undo step.
 
+![Selecting a note and running Title case from the command palette](https://raw.githubusercontent.com/perezamadorluisenrique-gif/text-format/main/docs/title-case.gif)
+
 ## Installing
 
 In Obsidian, open Settings -> Community plugins -> Browse, search for
@@ -56,6 +58,8 @@ nouns you already typed survive.
 | Remove invisible characters | Strips soft hyphens, zero-width marks and byte order marks, and turns non-breaking and exotic spaces into ordinary ones |
 | Links to plain text | Replaces every link with the text it displays |
 
+![A hard-wrapped, hyphenated paragraph pasted from a PDF, joined into one line with Join wrapped lines](https://raw.githubusercontent.com/perezamadorluisenrique-gif/text-format/main/docs/join-lines.gif)
+
 ## What these commands will not touch
 
 - **Fenced code blocks and inline code** are copied through untouched, as is
@@ -67,6 +71,8 @@ nouns you already typed survive.
   `- [x] Buy milk`, never `- [X] Buy Milk`.
 - **Abbreviations and decimals** (`e.g.`, `U.S.A.`, `3.14`) do not end a
   sentence and keep their own capitals.
+
+![Before and after Title case: the heading marks, task boxes, URL, quote marker and inline code are unchanged](https://raw.githubusercontent.com/perezamadorluisenrique-gif/text-format/main/docs/title-case-before-after.png)
 
 ## Settings
 
