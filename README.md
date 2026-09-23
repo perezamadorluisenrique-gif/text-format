@@ -58,11 +58,8 @@ nouns you already typed survive.
 
 ## What these commands will not touch
 
-- **Frontmatter** is never rewritten, not even with the whole note selected:
-  property names are case sensitive and their values are data.
 - **Fenced code blocks and inline code** are copied through untouched, as is
-  maths, inline or in a `$$` block, where recasing `\Sigma` would change the
-  formula.
+  inline maths.
 - **URLs, wikilinks, autolinks and e-mail addresses** keep their case, because
   lowering a URL can break it.
 - **A line's markdown prefix** — quote markers, bullets, ordered numbers, task

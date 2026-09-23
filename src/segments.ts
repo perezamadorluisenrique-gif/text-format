@@ -20,6 +20,21 @@ export interface Token {
  * Lower-casing a URL can break it and re-casing code changes its meaning,
  * which is the root of issues #103, #104 and #115 upstream.
  */
+/**
+ * A file name or a domain: `main.ts`, `notes.md`, `obsidian.md`. Title case
+ * made `Main.Ts` of the first, which is neither the file nor a word. Only
+ * the extensions listed count, so a missing space after a full stop
+ * (`end.Next`) is still read as two words.
+ */
+const FILE_EXTENSIONS = [
+  'md', 'txt', 'pdf', 'canvas', 'base', 'csv', 'json', 'ya?ml', 'toml', 'xml', 'html?', 'css',
+  'm?[jt]sx?', 'cjs', 'py', 'rb', 'rs', 'go', 'java', 'kt', 'swift', 'c', 'h', 'cpp', 'cs', 'php', 'sh', 'sql',
+  'png', 'jpe?g', 'gif', 'svg', 'webp', 'mp[34]', 'wav', 'zip', 'docx?', 'xlsx?', 'pptx?', 'epub',
+  'com', 'org', 'net', 'io', 'dev', 'app',
+];
+const FILE_NAME_SOURCE =
+  `[\\p{L}\\p{N}_-]+(?:\\.[\\p{L}\\p{N}_-]+)*\\.(?:${FILE_EXTENSIONS.join('|')})(?![\\p{L}\\p{N}])`;
+
 const PROTECTED_SOURCE = [
   '`[^`\\n]*`',
   '\\$[^$\\n]+\\$',
@@ -29,6 +44,7 @@ const PROTECTED_SOURCE = [
   'https?://\\S+',
   'www\\.\\S+',
   '[\\w.+-]+@[\\w-]+\\.[\\w-]+(?:\\.[\\w-]+)*',
+  FILE_NAME_SOURCE,
 ].join('|');
 
 /**

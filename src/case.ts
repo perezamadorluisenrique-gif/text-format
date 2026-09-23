@@ -93,18 +93,18 @@ function mapLines(text: string, fn: LineFn): string {
 function mapWords(
   text: string,
   options: CaseOptions,
-  fn: (word: string, index: number, words: Token[]) => string,
+  fn: (word: string, index: number, tokens: Token[]) => string,
 ): string {
   return mapLines(text, (body) => {
     const tokens = tokenize(body);
-    const words = tokens.filter((token) => token.kind === 'word');
+    // Positions count every token with content, not only words, so a title
+    // ending in a file name or a URL does not capitalise the stop word
+    // before it as if that were the last word.
+    const content = tokens.filter((token) => token.kind !== 'separator');
 
-    let seen = 0;
-    for (const token of tokens) {
-      if (token.kind !== 'word') continue;
-      token.text = fn(token.text, seen, words);
-      seen += 1;
-    }
+    content.forEach((token, index) => {
+      if (token.kind === 'word') token.text = fn(token.text, index, content);
+    });
 
     return render(tokens);
   });
@@ -174,10 +174,10 @@ export function toTitleCase(text: string, options: CaseOptions = {}): string {
     (options.stopWords ?? DEFAULT_STOP_WORDS).map((word) => word.toLowerCase()),
   );
 
-  return mapWords(text, options, (word, index, words) => {
+  return mapWords(text, options, (word, index, tokens) => {
     if (keepsCase(word, options)) return word;
 
-    const isEdge = index === 0 || index === words.length - 1;
+    const isEdge = index === 0 || index === tokens.length - 1;
     if (!isEdge && stopWords.has(word.toLowerCase())) {
       return lower(word, options.locale);
     }

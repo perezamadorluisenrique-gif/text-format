@@ -188,3 +188,11 @@ test('a fence of the other character does not close a code block', () => {
 
   assert.equal(toUpperCase(text), '~~~\nlet a;\n```\nlet b;\n~~~\nAFTER');
 });
+
+test('file names and domains keep their case', () => {
+  assert.equal(toTitleCase('edit main.ts and notes.md'), 'Edit main.ts and notes.md');
+  assert.equal(toTitleCase('read the docs on obsidian.md today'), 'Read the Docs on obsidian.md Today');
+  assert.equal(toUpperCase('open main.ts now'), 'OPEN main.ts NOW');
+  // A full stop with no space after it, before a real word, still splits.
+  assert.equal(toTitleCase('the end.next part'), 'The End.Next Part');
+});

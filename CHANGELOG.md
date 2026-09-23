@@ -6,6 +6,10 @@ renames the `Unreleased` heading below to that version.
 
 ## 0.1.2
 
+- File names and domains keep their case: Title case made `Main.Ts` of
+  `main.ts` and `Obsidian.Md` of `obsidian.md`. A title that ends in a file
+  name, a URL or inline code no longer capitalises the stop word before it.
+
 - No command touches a note's frontmatter any more. With the whole note
   selected, Title case capitalised property names (`tags` became `Tags`, which
   Obsidian no longer reads as tags), Join wrapped lines merged every property
