@@ -29,6 +29,8 @@ import {
   removeLineHyphenation,
 } from './src/cleanup.ts';
 
+import { frontmatterLineCount } from './src/segments.ts';
+
 interface TextFormatSettings {
   /** A BCP 47 tag, or '' for the rules of the running system. */
   locale: string;
@@ -168,11 +170,22 @@ export default class TextFormatPlugin extends Plugin {
     const changes: EditorChange[] = [];
     const seen = new Set<string>();
 
+    // Frontmatter is data, not prose: a selection that reaches into it,
+    // Select all being the usual one, is trimmed to start below it.
+    const lineCount = editor.lineCount();
+    const bodyStart = frontmatterLineCount((i) => (i < lineCount ? editor.getLine(i) : undefined));
+
     for (const selection of editor.listSelections()) {
       const range = rangeFor(editor, selection);
       if (range === null) continue;
 
-      const [from, to] = range;
+      const [start, to] = range;
+      let from = start;
+      if (from.line < bodyStart) {
+        if (to.line < bodyStart) continue;
+        from = { line: bodyStart, ch: 0 };
+        if (!isBefore(from, to)) continue;
+      }
       const key = `${from.line}:${from.ch}-${to.line}:${to.ch}`;
       if (seen.has(key)) continue;
       seen.add(key);

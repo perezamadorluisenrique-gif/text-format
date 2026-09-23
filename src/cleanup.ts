@@ -9,6 +9,8 @@
  * Nothing here imports `obsidian`, so it runs under plain Node.
  */
 
+import { blockTracker } from './segments.ts';
+
 export interface JoinOptions {
   /**
    * Drop the hyphen when a word was broken across two lines. On by default,
@@ -21,8 +23,6 @@ export interface LinkOptions {
   /** Replace `![alt](url)` with `alt` rather than removing it. On by default. */
   keepImageAltText?: boolean;
 }
-
-const FENCE = /^[ \t]*(?:```|~~~)/;
 
 /** Lines that are structure, not prose, and so never merge with a neighbour. */
 const STRUCTURAL = /^[ \t]*(?:#{1,6}[ \t]|={2,}[ \t]*$|-{3,}[ \t]*$|\*{3,}[ \t]*$|_{3,}[ \t]*$|\||[ \t]*$)/;
@@ -53,7 +53,7 @@ function readLine(raw: string): Line {
     quote,
     marker,
     body,
-    structural: STRUCTURAL.test(raw) || FENCE.test(raw),
+    structural: STRUCTURAL.test(raw),
   };
 }
 
@@ -74,18 +74,18 @@ function readLine(raw: string): Line {
 export function joinWrappedLines(text: string, options: JoinOptions = {}): string {
   const lines = text.split('\n').map(readLine);
   const output: Line[] = [];
-  let inFence = false;
+  const inBlock = blockTracker();
 
   for (const line of lines) {
-    if (FENCE.test(line.raw)) {
-      inFence = !inFence;
+    // Code and display maths never merge, with each other or with prose.
+    if (inBlock(line.raw)) {
+      line.structural = true;
       output.push(line);
       continue;
     }
 
     const previous = output[output.length - 1];
     const canJoin =
-      !inFence &&
       previous !== undefined &&
       !previous.structural &&
       !line.structural &&
@@ -160,16 +160,12 @@ export function linksToPlainText(text: string, options: LinkOptions = {}): strin
   return eachProseSegment(text, (segment) => stripLinks(segment, options));
 }
 
-/** Runs `fn` over everything that is not fenced or inline code. */
+/** Runs `fn` over everything that is not code, fenced or inline, or display maths. */
 function eachProseSegment(text: string, fn: (segment: string) => string): string {
-  let inFence = false;
+  const inBlock = blockTracker();
 
   return text.split('\n').map((line) => {
-    if (FENCE.test(line)) {
-      inFence = !inFence;
-      return line;
-    }
-    if (inFence) return line;
+    if (inBlock(line)) return line;
 
     return line
       .split(/(`+[^`]*`+)/)

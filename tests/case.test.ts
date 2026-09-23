@@ -169,3 +169,22 @@ test('a custom stop word list replaces the default', () => {
     'The Lord of The Rings',
   );
 });
+
+test('case commands leave display maths alone', () => {
+  const text = 'the sum\n$$\n\\Sigma_{i} = \\Alpha\n$$\nis big';
+
+  assert.equal(toUpperCase(text), 'THE SUM\n$$\n\\Sigma_{i} = \\Alpha\n$$\nIS BIG');
+  assert.equal(toLowerCase(text), 'the sum\n$$\n\\Sigma_{i} = \\Alpha\n$$\nis big');
+});
+
+test('a code block quoting another fence stays code to its real end', () => {
+  const text = '````\n```\nconst x = 1;\n```\n````\nafter';
+
+  assert.equal(toUpperCase(text), '````\n```\nconst x = 1;\n```\n````\nAFTER');
+});
+
+test('a fence of the other character does not close a code block', () => {
+  const text = '~~~\nlet a;\n```\nlet b;\n~~~\nafter';
+
+  assert.equal(toUpperCase(text), '~~~\nlet a;\n```\nlet b;\n~~~\nAFTER');
+});

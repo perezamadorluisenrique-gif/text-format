@@ -10,6 +10,7 @@
 
 import {
   type Locale,
+  blockTracker,
   type Token,
   capitalise,
   isAcronym,
@@ -48,8 +49,6 @@ export const DEFAULT_STOP_WORDS = [
 const LINE_PREFIX =
   /^([ \t]*(?:>[ \t]*)*(?:(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX/-][ \t]*\][ \t]+)?|#{1,6}[ \t]+)?)([\s\S]*)$/;
 
-const FENCE = /^[ \t]*(?:```|~~~)/;
-
 /**
  * A separator that closes a sentence: terminal punctuation, then any closing
  * quotes or brackets, then whitespace or the end of the line.
@@ -64,15 +63,13 @@ type LineFn = (body: string, context: LineContext) => string;
 
 function mapLines(text: string, fn: LineFn): string {
   const context: LineContext = { sentenceStart: true };
-  let inFence = false;
+  const inBlock = blockTracker();
 
   return text.split('\n').map((line) => {
-    if (FENCE.test(line)) {
-      inFence = !inFence;
+    if (inBlock(line)) {
       context.sentenceStart = true;
       return line;
     }
-    if (inFence) return line;
 
     const match = line.match(LINE_PREFIX);
     if (!match) return line;
