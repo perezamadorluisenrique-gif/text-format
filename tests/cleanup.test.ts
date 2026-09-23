@@ -175,3 +175,15 @@ test('linksToPlainText unwraps a reference-style link', () => {
 test('linksToPlainText leaves an unclosed link as typed', () => {
   assert.equal(linksToPlainText('a [half open link'), 'a [half open link');
 });
+
+test('joinWrappedLines leaves display maths on its own lines', () => {
+  const text = 'the sum\nis\n$$\nx = 1\ny = 2\n$$\nand so\non';
+
+  assert.equal(joinWrappedLines(text), 'the sum is\n$$\nx = 1\ny = 2\n$$\nand so on');
+});
+
+test('linksToPlainText leaves display maths alone', () => {
+  const text = '$$\n[a](b)\n$$\n[c](d)';
+
+  assert.equal(linksToPlainText(text), '$$\n[a](b)\n$$\nc');
+});

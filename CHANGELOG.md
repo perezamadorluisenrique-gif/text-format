@@ -4,6 +4,25 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## 0.1.2
+
+- File names and domains keep their case: Title case made `Main.Ts` of
+  `main.ts` and `Obsidian.Md` of `obsidian.md`. A title that ends in a file
+  name, a URL or inline code no longer capitalises the stop word before it.
+
+- No command touches a note's frontmatter any more. With the whole note
+  selected, Title case capitalised property names (`tags` became `Tags`, which
+  Obsidian no longer reads as tags), Join wrapped lines merged every property
+  onto one line, and Links to plain text stripped links out of properties. A
+  selection that reaches into the frontmatter now starts below it.
+- `$$` display maths is left alone, like inline maths already was. Case
+  commands recased the LaTeX inside it (`\Sigma` became `\sigma`) and Join
+  wrapped lines merged it into the surrounding paragraph.
+- A code block fenced with four backticks that quotes a three-backtick fence,
+  or a `~~~` block that contains a ```` ``` ```` line, now stays code to its
+  real end. The inner fence used to switch the commands back on halfway
+  through the block.
+
 ## 0.1.1
 
 - Settings are now described with Obsidian 1.13's declarative settings API, so

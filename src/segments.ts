@@ -20,6 +20,21 @@ export interface Token {
  * Lower-casing a URL can break it and re-casing code changes its meaning,
  * which is the root of issues #103, #104 and #115 upstream.
  */
+/**
+ * A file name or a domain: `main.ts`, `notes.md`, `obsidian.md`. Title case
+ * made `Main.Ts` of the first, which is neither the file nor a word. Only
+ * the extensions listed count, so a missing space after a full stop
+ * (`end.Next`) is still read as two words.
+ */
+const FILE_EXTENSIONS = [
+  'md', 'txt', 'pdf', 'canvas', 'base', 'csv', 'json', 'ya?ml', 'toml', 'xml', 'html?', 'css',
+  'm?[jt]sx?', 'cjs', 'py', 'rb', 'rs', 'go', 'java', 'kt', 'swift', 'c', 'h', 'cpp', 'cs', 'php', 'sh', 'sql',
+  'png', 'jpe?g', 'gif', 'svg', 'webp', 'mp[34]', 'wav', 'zip', 'docx?', 'xlsx?', 'pptx?', 'epub',
+  'com', 'org', 'net', 'io', 'dev', 'app',
+];
+const FILE_NAME_SOURCE =
+  `[\\p{L}\\p{N}_-]+(?:\\.[\\p{L}\\p{N}_-]+)*\\.(?:${FILE_EXTENSIONS.join('|')})(?![\\p{L}\\p{N}])`;
+
 const PROTECTED_SOURCE = [
   '`[^`\\n]*`',
   '\\$[^$\\n]+\\$',
@@ -29,6 +44,7 @@ const PROTECTED_SOURCE = [
   'https?://\\S+',
   'www\\.\\S+',
   '[\\w.+-]+@[\\w-]+\\.[\\w-]+(?:\\.[\\w-]+)*',
+  FILE_NAME_SOURCE,
 ].join('|');
 
 /**
@@ -115,4 +131,75 @@ export function isAcronym(word: string, locale: Locale): boolean {
   if (word === lower(word, locale)) return false;
 
   return word === upper(word, locale);
+}
+
+/** A fence that opens a code block: three or more backticks or tildes. */
+const FENCE_OPEN = /^[ \t]*(`{3,}|~{3,})/;
+/** A fence that can close one: nothing after the run but spaces. */
+const FENCE_CLOSE = /^[ \t]*(`{3,}|~{3,})[ \t]*$/;
+
+function countOf(haystack: string, needle: string): number {
+  let count = 0;
+  for (let at = haystack.indexOf(needle); at !== -1; at = haystack.indexOf(needle, at + needle.length)) {
+    count++;
+  }
+  return count;
+}
+
+/**
+ * Follows fenced code blocks and `$$` display maths down a text, one line
+ * at a time. The returned function answers, for each line in order, whether
+ * it belongs to such a block, delimiters included; those lines are code or
+ * LaTeX, and recasing `\Sigma` to `\sigma` changes the formula.
+ *
+ * A fence closes only on a run of the same character at least as long as
+ * the one that opened it, so a ```` block can quote a ``` block without the
+ * inner fence switching the commands back on halfway through.
+ */
+export function blockTracker(): (line: string) => boolean {
+  let fence: string | null = null;
+  let inMath = false;
+
+  return (line) => {
+    if (fence !== null) {
+      const close = FENCE_CLOSE.exec(line);
+      if (close && close[1][0] === fence[0] && close[1].length >= fence.length) fence = null;
+      return true;
+    }
+    if (inMath) {
+      if (countOf(line, '$$') % 2 === 1) inMath = false;
+      return true;
+    }
+    const open = FENCE_OPEN.exec(line);
+    if (open) {
+      fence = open[1];
+      return true;
+    }
+    // An odd number of `$$` opens a block; `$$x$$` on one line is inline.
+    if (countOf(line, '$$') % 2 === 1) {
+      inMath = true;
+      return true;
+    }
+    return false;
+  };
+}
+
+/**
+ * How many lines at the top of a note are its frontmatter, fences included,
+ * or 0 when it has none. `line(i)` returns line `i`, or undefined past the
+ * end, so the caller never has to copy the whole note.
+ *
+ * Property keys are case sensitive and their values are data, so no command
+ * may rewrite them, not even when the whole note is selected.
+ */
+export function frontmatterLineCount(line: (index: number) => string | undefined): number {
+  const first = line(0);
+  if (first === undefined || first.replace(/\s+$/, '') !== '---') return 0;
+
+  for (let i = 1; ; i++) {
+    const text = line(i);
+    if (text === undefined) return 0;
+    const trimmed = text.replace(/\s+$/, '');
+    if (trimmed === '---' || trimmed === '...') return i + 1;
+  }
 }

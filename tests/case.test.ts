@@ -169,3 +169,30 @@ test('a custom stop word list replaces the default', () => {
     'The Lord of The Rings',
   );
 });
+
+test('case commands leave display maths alone', () => {
+  const text = 'the sum\n$$\n\\Sigma_{i} = \\Alpha\n$$\nis big';
+
+  assert.equal(toUpperCase(text), 'THE SUM\n$$\n\\Sigma_{i} = \\Alpha\n$$\nIS BIG');
+  assert.equal(toLowerCase(text), 'the sum\n$$\n\\Sigma_{i} = \\Alpha\n$$\nis big');
+});
+
+test('a code block quoting another fence stays code to its real end', () => {
+  const text = '````\n```\nconst x = 1;\n```\n````\nafter';
+
+  assert.equal(toUpperCase(text), '````\n```\nconst x = 1;\n```\n````\nAFTER');
+});
+
+test('a fence of the other character does not close a code block', () => {
+  const text = '~~~\nlet a;\n```\nlet b;\n~~~\nafter';
+
+  assert.equal(toUpperCase(text), '~~~\nlet a;\n```\nlet b;\n~~~\nAFTER');
+});
+
+test('file names and domains keep their case', () => {
+  assert.equal(toTitleCase('edit main.ts and notes.md'), 'Edit main.ts and notes.md');
+  assert.equal(toTitleCase('read the docs on obsidian.md today'), 'Read the Docs on obsidian.md Today');
+  assert.equal(toUpperCase('open main.ts now'), 'OPEN main.ts NOW');
+  // A full stop with no space after it, before a real word, still splits.
+  assert.equal(toTitleCase('the end.next part'), 'The End.Next Part');
+});
