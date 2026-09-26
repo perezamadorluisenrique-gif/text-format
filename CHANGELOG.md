@@ -4,6 +4,13 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## 0.2.1
+
+- Every command has an icon, so the ones you add to the mobile toolbar
+  (Settings → Mobile → Manage toolbar options) show what they do instead of
+  a question mark. **Change case…** is the one to add if you want a single
+  button for every case.
+
 ## 0.2.0
 
 - Seven new cases for names rather than prose: camelCase, PascalCase,

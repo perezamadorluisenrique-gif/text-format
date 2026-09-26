@@ -67,15 +67,18 @@ const LOCALES: Record<string, string> = {
 interface Command {
   id: string;
   name: string;
+  /** Shown when the command is put on the mobile toolbar. */
+  icon: string;
   run: (text: string, settings: TextFormatSettings) => string;
   /** Offered in the case picker. */
   isCase?: boolean;
 }
 
-function identifier(id: string, name: string, style: IdentifierStyle): Command {
+function identifier(id: string, name: string, icon: string, style: IdentifierStyle): Command {
   return {
     id,
     name,
+    icon,
     isCase: true,
     run: (t, s) => toIdentifierCase(t, style, { locale: caseOptions(s).locale }),
   };
@@ -93,48 +96,54 @@ function caseOptions(settings: TextFormatSettings): CaseOptions {
 }
 
 const COMMANDS: Command[] = [
-  { id: 'upper', name: 'Uppercase', isCase: true, run: (t, s) => toUpperCase(t, caseOptions(s)) },
-  { id: 'lower', name: 'Lowercase', isCase: true, run: (t, s) => toLowerCase(t, caseOptions(s)) },
-  { id: 'title', name: 'Title case', isCase: true, run: (t, s) => toTitleCase(t, caseOptions(s)) },
-  { id: 'sentence', name: 'Sentence case', isCase: true, run: (t, s) => toSentenceCase(t, caseOptions(s)) },
+  { id: 'upper', icon: 'case-upper', name: 'Uppercase', isCase: true, run: (t, s) => toUpperCase(t, caseOptions(s)) },
+  { id: 'lower', icon: 'case-lower', name: 'Lowercase', isCase: true, run: (t, s) => toLowerCase(t, caseOptions(s)) },
+  { id: 'title', icon: 'heading', name: 'Title case', isCase: true, run: (t, s) => toTitleCase(t, caseOptions(s)) },
+  { id: 'sentence', icon: 'case-sensitive', name: 'Sentence case', isCase: true, run: (t, s) => toSentenceCase(t, caseOptions(s)) },
   {
     id: 'capitalize-words',
     name: 'Capitalize each word',
+    icon: 'whole-word',
     isCase: true,
     run: (t, s) => capitalizeWords(t, caseOptions(s)),
   },
   {
     id: 'capitalize-sentences',
     name: 'Capitalize sentences, leaving the rest',
+    icon: 'pilcrow',
     isCase: true,
     run: (t, s) => capitalizeSentences(t, caseOptions(s)),
   },
-  { id: 'cycle', name: 'Cycle case', run: (t, s) => cycleCase(t, caseOptions(s)) },
-  identifier('camel-case', 'camelCase', 'camel'),
-  identifier('pascal-case', 'PascalCase', 'pascal'),
-  identifier('snake-case', 'snake_case', 'snake'),
-  identifier('constant-case', 'CONSTANT_CASE', 'constant'),
-  identifier('kebab-case', 'kebab-case', 'kebab'),
-  identifier('dot-case', 'dot.case', 'dot'),
-  identifier('slug', 'Slug (lowercase, no accents, hyphens)', 'slug'),
+  { id: 'cycle', icon: 'repeat', name: 'Cycle case', run: (t, s) => cycleCase(t, caseOptions(s)) },
+  identifier('camel-case', 'camelCase', 'code', 'camel'),
+  identifier('pascal-case', 'PascalCase', 'braces', 'pascal'),
+  identifier('snake-case', 'snake_case', 'underline', 'snake'),
+  identifier('constant-case', 'CONSTANT_CASE', 'arrow-big-up', 'constant'),
+  identifier('kebab-case', 'kebab-case', 'minus', 'kebab'),
+  identifier('dot-case', 'dot.case', 'dot', 'dot'),
+  identifier('slug', 'Slug (lowercase, no accents, hyphens)', 'link', 'slug'),
   {
     id: 'join-lines',
     name: 'Join wrapped lines',
+    icon: 'merge',
     run: (t, s) => joinWrappedLines(t, { removeHyphen: s.removeHyphenOnJoin }),
   },
   {
     id: 'dehyphenate',
     name: 'Rejoin words split across lines',
+    icon: 'spell-check',
     run: (t) => removeLineHyphenation(t),
   },
   {
     id: 'strip-invisibles',
     name: 'Remove invisible characters',
+    icon: 'eraser',
     run: (t) => removeInvisibles(t),
   },
   {
     id: 'unlink',
     name: 'Links to plain text',
+    icon: 'unlink',
     run: (t, s) => linksToPlainText(t, { keepImageAltText: s.keepImageAltText }),
   },
 ];
@@ -174,6 +183,7 @@ export default class TextFormatPlugin extends Plugin {
       this.addCommand({
         id: command.id,
         name: command.name,
+        icon: command.icon,
         editorCallback: (editor: Editor) => this.apply(editor, command),
       });
     }
@@ -183,6 +193,7 @@ export default class TextFormatPlugin extends Plugin {
     this.addCommand({
       id: 'pick-case',
       name: 'Change case…',
+      icon: 'a-large-small',
       editorCallback: (editor: Editor) => {
         new CasePicker(this, editor, COMMANDS.filter((command) => command.isCase)).open();
       },
