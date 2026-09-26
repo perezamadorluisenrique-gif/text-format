@@ -1,6 +1,6 @@
 {
   "name": "text-format",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Case conversion and copy/OCR cleanup commands for Obsidian.",
   "main": "main.js",
   "scripts": {

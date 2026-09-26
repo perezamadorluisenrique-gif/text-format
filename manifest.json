@@ -1,9 +1,9 @@
 {
   "id": "text-format",
   "name": "Text Case and Cleanup",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "minAppVersion": "1.0.0",
-  "description": "Converts the selection between upper, lower, title, sentence and capitalized case, or cycles through them. Also joins wrapped lines, rejoins words split across a line break, strips invisible characters and turns links into plain text.",
+  "description": "Converts the selection between upper, lower, title and sentence case, camelCase, snake_case, kebab-case and slugs, from a picker that previews each. Also joins wrapped lines, rejoins split words, strips invisible characters and unlinks links.",
   "author": "Siulved54",
   "authorUrl": "https://github.com/perezamadorluisenrique-gif",
   "isDesktopOnly": false

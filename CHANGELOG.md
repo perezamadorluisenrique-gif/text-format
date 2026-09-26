@@ -4,6 +4,21 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## 0.2.0
+
+- Seven new cases for names rather than prose: camelCase, PascalCase,
+  snake_case, CONSTANT_CASE, kebab-case, dot.case, and Slug (lowercase, no
+  accents, hyphens). They convert into each other too, so `userAccountId`
+  becomes `user_account_id` and back. `XMLHttpRequest` splits as
+  `xml_http_request`, and `don't` stays one word.
+- Each line converts on its own and keeps its bullet, task box, quote marker
+  or heading hashes, so a list of titles becomes a list of slugs rather than
+  one long identifier. Inline code, maths, links and URLs stay as they are.
+- Slug drops accents (`Café Über Straße` becomes `cafe-uber-strasse`) but
+  keeps Cyrillic, Greek, CJK and other scripts with no Latin form.
+- New command **Change case…** opens one list of every case, each showing what
+  your selection would become. Bind it to one hotkey instead of fourteen.
+
 ## 0.1.2
 
 - File names and domains keep their case: Title case made `Main.Ts` of

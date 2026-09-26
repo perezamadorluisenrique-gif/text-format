@@ -5,3 +5,13 @@
   min-height: 5em;
   resize: vertical;
 }
+
+/* The case picker's preview of what the selection would become. */
+.text-format-preview {
+  display: block;
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -8,6 +8,7 @@ import {
   PluginSettingTab,
   Setting,
   type SettingDefinitionItem,
+  SuggestModal,
 } from 'obsidian';
 
 import {
@@ -21,6 +22,8 @@ import {
   toTitleCase,
   toUpperCase,
 } from './src/case.ts';
+
+import { type IdentifierStyle, toIdentifierCase } from './src/identifier.ts';
 
 import {
   joinWrappedLines,
@@ -65,6 +68,17 @@ interface Command {
   id: string;
   name: string;
   run: (text: string, settings: TextFormatSettings) => string;
+  /** Offered in the case picker. */
+  isCase?: boolean;
+}
+
+function identifier(id: string, name: string, style: IdentifierStyle): Command {
+  return {
+    id,
+    name,
+    isCase: true,
+    run: (t, s) => toIdentifierCase(t, style, { locale: caseOptions(s).locale }),
+  };
 }
 
 function caseOptions(settings: TextFormatSettings): CaseOptions {
@@ -79,21 +93,30 @@ function caseOptions(settings: TextFormatSettings): CaseOptions {
 }
 
 const COMMANDS: Command[] = [
-  { id: 'upper', name: 'Uppercase', run: (t, s) => toUpperCase(t, caseOptions(s)) },
-  { id: 'lower', name: 'Lowercase', run: (t, s) => toLowerCase(t, caseOptions(s)) },
-  { id: 'title', name: 'Title case', run: (t, s) => toTitleCase(t, caseOptions(s)) },
-  { id: 'sentence', name: 'Sentence case', run: (t, s) => toSentenceCase(t, caseOptions(s)) },
+  { id: 'upper', name: 'Uppercase', isCase: true, run: (t, s) => toUpperCase(t, caseOptions(s)) },
+  { id: 'lower', name: 'Lowercase', isCase: true, run: (t, s) => toLowerCase(t, caseOptions(s)) },
+  { id: 'title', name: 'Title case', isCase: true, run: (t, s) => toTitleCase(t, caseOptions(s)) },
+  { id: 'sentence', name: 'Sentence case', isCase: true, run: (t, s) => toSentenceCase(t, caseOptions(s)) },
   {
     id: 'capitalize-words',
     name: 'Capitalize each word',
+    isCase: true,
     run: (t, s) => capitalizeWords(t, caseOptions(s)),
   },
   {
     id: 'capitalize-sentences',
     name: 'Capitalize sentences, leaving the rest',
+    isCase: true,
     run: (t, s) => capitalizeSentences(t, caseOptions(s)),
   },
   { id: 'cycle', name: 'Cycle case', run: (t, s) => cycleCase(t, caseOptions(s)) },
+  identifier('camel-case', 'camelCase', 'camel'),
+  identifier('pascal-case', 'PascalCase', 'pascal'),
+  identifier('snake-case', 'snake_case', 'snake'),
+  identifier('constant-case', 'CONSTANT_CASE', 'constant'),
+  identifier('kebab-case', 'kebab-case', 'kebab'),
+  identifier('dot-case', 'dot.case', 'dot'),
+  identifier('slug', 'Slug (lowercase, no accents, hyphens)', 'slug'),
   {
     id: 'join-lines',
     name: 'Join wrapped lines',
@@ -155,6 +178,16 @@ export default class TextFormatPlugin extends Plugin {
       });
     }
 
+    // One hotkey for every case, with each result previewed on the
+    // selection before it is applied.
+    this.addCommand({
+      id: 'pick-case',
+      name: 'Change case…',
+      editorCallback: (editor: Editor) => {
+        new CasePicker(this, editor, COMMANDS.filter((command) => command.isCase)).open();
+      },
+    });
+
     this.addSettingTab(new TextFormatSettingTab(this));
   }
 
@@ -166,7 +199,21 @@ export default class TextFormatPlugin extends Plugin {
    * the undo history, the folds and the scroll position — the mistake this
    * repository already made once in `snap-markers`.
    */
-  private apply(editor: Editor, command: Command): void {
+  apply(editor: Editor, command: Command): void {
+    const changes = this.plan(editor, command);
+
+    if (changes.length === 0) {
+      new Notice('Nothing to format.');
+      return;
+    }
+
+    // No `selections` is deliberate: the editor maps the existing ones
+    // through the changes, which is what keeps a multi-cursor edit sane.
+    editor.transaction({ changes });
+  }
+
+  /** The edits a command would make, without making them. */
+  plan(editor: Editor, command: Command): EditorChange[] {
     const changes: EditorChange[] = [];
     const seen = new Set<string>();
 
@@ -200,14 +247,7 @@ export default class TextFormatPlugin extends Plugin {
       changes.push({ from, to, text: formatted });
     }
 
-    if (changes.length === 0) {
-      new Notice('Nothing to format.');
-      return;
-    }
-
-    // No `selections` is deliberate: the editor maps the existing ones
-    // through the changes, which is what keeps a multi-cursor edit sane.
-    editor.transaction({ changes });
+    return changes;
   }
 
   async loadSettings(): Promise<void> {
@@ -220,6 +260,52 @@ export default class TextFormatPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+  }
+}
+
+/** How much of the converted selection a picker row shows. */
+const PREVIEW_LENGTH = 60;
+
+/**
+ * Every case command in one list, each row showing what the first selection
+ * would become, so choosing between snake_case and kebab-case needs no
+ * trial and undo.
+ */
+class CasePicker extends SuggestModal<Command> {
+  private plugin: TextFormatPlugin;
+  private editor: Editor;
+  private commands: Command[];
+
+  constructor(plugin: TextFormatPlugin, editor: Editor, commands: Command[]) {
+    super(plugin.app);
+    this.plugin = plugin;
+    this.editor = editor;
+    this.commands = commands;
+    this.setPlaceholder('Pick a case for the selection');
+  }
+
+  getSuggestions(query: string): Command[] {
+    const wanted = query.toLowerCase().replace(/[\s_.-]+/g, '');
+    return this.commands.filter((command) =>
+      command.name.toLowerCase().replace(/[\s_.-]+/g, '').includes(wanted));
+  }
+
+  renderSuggestion(command: Command, el: HTMLElement): void {
+    el.createDiv({ text: command.name });
+    el.createEl('small', { text: this.preview(command), cls: 'text-format-preview' });
+  }
+
+  onChooseSuggestion(command: Command): void {
+    this.plugin.apply(this.editor, command);
+  }
+
+  private preview(command: Command): string {
+    const change = this.plugin.plan(this.editor, command)[0];
+    if (change === undefined) return 'No change';
+
+    const text = change.text.split('\n').find((line) => line.trim().length > 0) ?? change.text;
+    const chars = Array.from(text.trim());
+    return chars.length > PREVIEW_LENGTH ? chars.slice(0, PREVIEW_LENGTH).join('') + '…' : chars.join('');
   }
 }
 
