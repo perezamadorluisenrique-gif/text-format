@@ -45,6 +45,32 @@ the current line, and on a blank line it does nothing.
 | Capitalize sentences, leaving the rest | `The lord of the rings` |
 | Cycle case | lowercase, then Title Case, then UPPERCASE, then round again |
 
+### Names: variables, file names, tags, anchors
+
+| Command | `user account ID` becomes |
+| --- | --- |
+| camelCase | `userAccountId` |
+| PascalCase | `UserAccountId` |
+| snake_case | `user_account_id` |
+| CONSTANT_CASE | `USER_ACCOUNT_ID` |
+| kebab-case | `user-account-id` |
+| dot.case | `user.account.id` |
+| Slug (lowercase, no accents, hyphens) | `user-account-id`, and `Café Über Straße` becomes `cafe-uber-strasse` |
+
+They read each other as well as prose: `userAccountId`, `user_account_id` and
+`USER-ACCOUNT-ID` all give the same words, `XMLHttpRequest` splits as
+`xml_http_request`, and `don't` stays one word. Each line converts on its own
+and keeps its bullet, task box or heading hashes, so a list of titles becomes a
+list of slugs, not one long identifier. Links, URLs, inline code and maths are
+left in place.
+
+### One hotkey for all of them
+
+**Change case…** lists every case with a preview of what your selection would
+become. Type a few letters to filter (`snake`, `kebab`), then Enter.
+
+![The Change case picker, previewing each case on the selected heading](https://raw.githubusercontent.com/perezamadorluisenrique-gif/text-format/main/docs/case-picker.png)
+
 **Sentence case** lowers everything first and then raises the opening word of
 each sentence. **Capitalize sentences** only raises the opening word, so proper
 nouns you already typed survive.
