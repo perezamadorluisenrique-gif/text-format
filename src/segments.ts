@@ -133,6 +133,16 @@ export function isAcronym(word: string, locale: Locale): boolean {
   return word === upper(word, locale);
 }
 
+/**
+ * True for `iPhone`, `macOS`, `iOS`, `GitHub` and `McDonald`: a capital
+ * straight after a lowercase letter. That is how brand names and surnames
+ * are spelled, and no case rule can rebuild it once it is flattened.
+ * `Hello`, `NASA` and `hello` have no such capital.
+ */
+export function isMixedCase(word: string): boolean {
+  return /\p{Ll}\p{Lu}/u.test(word);
+}
+
 /** A fence that opens a code block: three or more backticks or tildes. */
 const FENCE_OPEN = /^[ \t]*(`{3,}|~{3,})/;
 /** A fence that can close one: nothing after the run but spaces. */

@@ -14,6 +14,7 @@ import {
   type Token,
   capitalise,
   isAcronym,
+  isMixedCase,
   lower,
   render,
   tokenize,
@@ -110,8 +111,9 @@ function mapWords(
   });
 }
 
+/** Acronyms such as `NASA` and mixed-case names such as `iPhone` or `GitHub`. */
 function keepsCase(word: string, options: CaseOptions): boolean {
-  return options.preserveAcronyms !== false && isAcronym(word, options.locale);
+  return options.preserveAcronyms !== false && (isAcronym(word, options.locale) || isMixedCase(word));
 }
 
 /**

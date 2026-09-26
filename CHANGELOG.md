@@ -4,6 +4,13 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## 0.2.2
+
+- Title case, sentence case and "Capitalize each word" keep mixed-case names
+  as they are written: `iPhone`, `macOS`, `iOS`, `GitHub`, `JavaScript`,
+  `McDonald`. They used to come out as `Iphone` or `Github`. This follows the
+  "Keep acronyms as they are" setting, and "Cycle case" still flattens them.
+
 ## 0.2.1
 
 - Every command has an icon, so the ones you add to the mobile toolbar

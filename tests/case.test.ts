@@ -196,3 +196,15 @@ test('file names and domains keep their case', () => {
   // A full stop with no space after it, before a real word, still splits.
   assert.equal(toTitleCase('the end.next part'), 'The End.Next Part');
 });
+
+test('mixed-case names survive title, word and sentence case', () => {
+  assert.equal(toTitleCase('a well-known iPhone app on GitHub'), 'A Well-Known iPhone App on GitHub');
+  assert.equal(toTitleCase('using macOS and iOS with JavaScript'), 'Using macOS and iOS with JavaScript');
+  assert.equal(capitalizeWords('ask McDonald about eBay'), 'Ask McDonald About eBay');
+  assert.equal(toSentenceCase('the iPhone is here. we use GitHub'), 'The iPhone is here. We use GitHub');
+});
+
+test('mixed-case names flatten when preservation is off, and in the cycle', () => {
+  assert.equal(toTitleCase('the iPhone', { preserveAcronyms: false }), 'The Iphone');
+  assert.equal(cycleCase('the iPhone'), 'the iphone');
+});

@@ -332,7 +332,7 @@ const SETTING_TEXT: Record<keyof TextFormatSettings, { name: string; desc: strin
   },
   preserveAcronyms: {
     name: 'Keep acronyms as they are',
-    desc: 'Leaves runs like NASA and PDF alone. Ignored when the whole selection is already uppercase, since then every word looks like an acronym.',
+    desc: 'Leaves acronyms like NASA and PDF, and names like iPhone, macOS and GitHub, as they are. Ignored when the whole selection is already uppercase, since then every word looks like an acronym.',
   },
   stopWords: {
     name: 'Words title case keeps lowercase',
