@@ -105,7 +105,7 @@ nouns you already typed survive.
 | Setting | Default | What it is for |
 | --- | --- | --- |
 | Language rules | System default | Turkish and Azerbaijani map the dotted and dotless i differently from every other language; Lithuanian keeps the dot over an accented lowercase i |
-| Keep acronyms as they are | On | Leaves `NASA` and `PDF` alone. It is ignored when the whole selection is already uppercase, since then every word looks like an acronym |
+| Keep acronyms as they are | On | Leaves acronyms such as `NASA` and `PDF`, and mixed-case names such as `iPhone`, `macOS` and `GitHub`, alone. It is ignored when the whole selection is already uppercase, since then every word looks like an acronym |
 | Words title case keeps lowercase | A practical list | No two style guides agree here, so the list is yours to edit. The first and last word of a title are always capitalized whatever the list says |
 | Drop the hyphen when joining lines | On | A PDF breaks a word as `trans-` and `lation`. Turn this off for text where a real compound such as `well-known` is likelier than a broken word |
 | Keep image alt text | On | Leaves the description behind when an image becomes plain text |
