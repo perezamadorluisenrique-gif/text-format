@@ -4,7 +4,7 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
-## Unreleased
+## 0.3.0
 
 - New line commands: **Sort lines A to Z**, **Sort lines Z to A**, **Remove
   duplicate lines**, **Remove blank lines** and **Collapse runs of blank
