@@ -86,6 +86,20 @@ nouns you already typed survive.
 
 ![A hard-wrapped, hyphenated paragraph pasted from a PDF, joined into one line with Join wrapped lines](https://raw.githubusercontent.com/perezamadorluisenrique-gif/text-format/main/docs/join-lines.gif)
 
+### Lines
+
+| Command | What it does |
+| --- | --- |
+| Sort lines A to Z | Sorts naturally (`item 2` before `item 10`), ignoring case and accents. A list item moves with the lines indented under it, items are compared by their text rather than the bullet or checkbox, and an ordered list is renumbered |
+| Sort lines Z to A | The same, in reverse |
+| Remove duplicate lines | Keeps the first of each repeated line |
+| Remove blank lines | Removes every empty line |
+| Collapse runs of blank lines | Leaves at most one empty line between paragraphs |
+
+These work on every line the selection touches, or on the whole note when
+nothing is selected. The front matter is never included, lines inside code
+blocks are never removed, and one undo puts everything back.
+
 ## What these commands will not touch
 
 - **Fenced code blocks and inline code** are copied through untouched, as is
@@ -160,9 +174,12 @@ document.
 | --- | --- | --- |
 | [Shared Blocks](https://obsidian.md/plugins?id=shared-blocks) | Write a block of text once and reuse it in any note. Edit the source and every reference re-renders live. | [shared-blocks](https://github.com/perezamadorluisenrique-gif/shared-blocks) |
 | [Typography as You Type](https://obsidian.md/plugins?id=typography-as-you-type) | Curly quotes, dashes and ellipses as you type, kept out of code and maths, with Backspace to take one back. | [smart-typography-plugin](https://github.com/perezamadorluisenrique-gif/smart-typography-plugin) |
+| [Section Numbering](https://obsidian.md/plugins?id=section-numbering) | Number headings as an outline (1, 1.1, 1.2) and keep every link to them working when they renumber. | [section-numbering](https://github.com/perezamadorluisenrique-gif/section-numbering) |
+| [Spreadsheet to Table](https://obsidian.md/plugins?id=spreadsheet-to-table) | Paste cells from Excel or Google Sheets as a Markdown table with a real header, insert CSV files, and copy tables back out. | [spreadsheet-to-table](https://github.com/perezamadorluisenrique-gif/spreadsheet-to-table) |
+| [Hybrid Line Numbers](https://obsidian.md/plugins?id=hybrid-line-numbers) | Relative and hybrid line numbers for Vim-style jumps, where a folded section counts as one line. | [hybrid-line-numbers](https://github.com/perezamadorluisenrique-gif/hybrid-line-numbers) |
 
-Both are in the community directory: Settings -> Community plugins -> Browse,
-then search for the name.
+All of them are in the community directory: Settings -> Community plugins ->
+Browse, then search for the name.
 
 ## Licence
 
