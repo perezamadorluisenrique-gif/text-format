@@ -32,6 +32,8 @@ import {
   removeLineHyphenation,
 } from './src/cleanup.ts';
 
+import { collapseBlankLines, removeBlankLines, removeDuplicateLines, sortLines } from './src/lines.ts';
+
 import { frontmatterLineCount } from './src/segments.ts';
 
 interface TextFormatSettings {
@@ -72,6 +74,11 @@ interface Command {
   run: (text: string, settings: TextFormatSettings) => string;
   /** Offered in the case picker. */
   isCase?: boolean;
+  /**
+   * Works on whole lines: the selection grows to the lines it touches, and
+   * with no selection the command takes the whole note.
+   */
+  lines?: boolean;
 }
 
 function identifier(id: string, name: string, icon: string, style: IdentifierStyle): Command {
@@ -146,6 +153,29 @@ const COMMANDS: Command[] = [
     icon: 'unlink',
     run: (t, s) => linksToPlainText(t, { keepImageAltText: s.keepImageAltText }),
   },
+  {
+    id: 'sort-lines',
+    name: 'Sort lines A to Z',
+    icon: 'arrow-down-az',
+    lines: true,
+    run: (t, s) => sortLines(t, 'asc', s.locale === '' ? undefined : s.locale),
+  },
+  {
+    id: 'sort-lines-desc',
+    name: 'Sort lines Z to A',
+    icon: 'arrow-up-za',
+    lines: true,
+    run: (t, s) => sortLines(t, 'desc', s.locale === '' ? undefined : s.locale),
+  },
+  { id: 'dedupe-lines', name: 'Remove duplicate lines', icon: 'copy-minus', lines: true, run: (t) => removeDuplicateLines(t) },
+  { id: 'remove-blank-lines', name: 'Remove blank lines', icon: 'fold-vertical', lines: true, run: (t) => removeBlankLines(t) },
+  {
+    id: 'collapse-blank-lines',
+    name: 'Collapse runs of blank lines',
+    icon: 'between-horizontal-start',
+    lines: true,
+    run: (t) => collapseBlankLines(t),
+  },
 ];
 
 /** True when `a` comes before `b` in the document. */
@@ -160,8 +190,20 @@ function isBefore(a: EditorPosition, b: EditorPosition): boolean {
  * A caret on a blank line yields nothing, which is why this plugin cannot
  * reproduce upstream #110, where uppercasing an empty line froze the app.
  */
-function rangeFor(editor: Editor, selection: EditorSelection): [EditorPosition, EditorPosition] | null {
+function rangeFor(editor: Editor, selection: EditorSelection, lines = false): [EditorPosition, EditorPosition] | null {
   const { anchor, head } = selection;
+
+  if (lines) {
+    const empty = anchor.line === head.line && anchor.ch === head.ch;
+    if (empty) {
+      const last = editor.lastLine();
+      return [{ line: 0, ch: 0 }, { line: last, ch: editor.getLine(last).length }];
+    }
+    const [from, to] = isBefore(anchor, head) ? [anchor, head] : [head, anchor];
+    // A selection ending at the start of a line does not take that line.
+    const lastLine = to.ch === 0 && to.line > from.line ? to.line - 1 : to.line;
+    return [{ line: from.line, ch: 0 }, { line: lastLine, ch: editor.getLine(lastLine).length }];
+  }
 
   if (anchor.line !== head.line || anchor.ch !== head.ch) {
     return isBefore(anchor, head) ? [anchor, head] : [head, anchor];
@@ -234,7 +276,7 @@ export default class TextFormatPlugin extends Plugin {
     const bodyStart = frontmatterLineCount((i) => (i < lineCount ? editor.getLine(i) : undefined));
 
     for (const selection of editor.listSelections()) {
-      const range = rangeFor(editor, selection);
+      const range = rangeFor(editor, selection, command.lines);
       if (range === null) continue;
 
       const [start, to] = range;

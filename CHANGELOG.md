@@ -4,6 +4,16 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## Unreleased
+
+- New line commands: **Sort lines A to Z**, **Sort lines Z to A**, **Remove
+  duplicate lines**, **Remove blank lines** and **Collapse runs of blank
+  lines**. They work on the lines the selection touches, or the whole note
+  when nothing is selected, never the front matter. Sorting is natural and
+  Markdown-aware: list items keep their sub-items, checkboxes and bullets
+  don't affect the order, and ordered lists are renumbered. Lines in code
+  blocks are never removed.
+
 ## 0.2.2
 
 - Title case, sentence case and "Capitalize each word" keep mixed-case names

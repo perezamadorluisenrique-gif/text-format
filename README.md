@@ -86,6 +86,20 @@ nouns you already typed survive.
 
 ![A hard-wrapped, hyphenated paragraph pasted from a PDF, joined into one line with Join wrapped lines](https://raw.githubusercontent.com/perezamadorluisenrique-gif/text-format/main/docs/join-lines.gif)
 
+### Lines
+
+| Command | What it does |
+| --- | --- |
+| Sort lines A to Z | Sorts naturally (`item 2` before `item 10`), ignoring case and accents. A list item moves with the lines indented under it, items are compared by their text rather than the bullet or checkbox, and an ordered list is renumbered |
+| Sort lines Z to A | The same, in reverse |
+| Remove duplicate lines | Keeps the first of each repeated line |
+| Remove blank lines | Removes every empty line |
+| Collapse runs of blank lines | Leaves at most one empty line between paragraphs |
+
+These work on every line the selection touches, or on the whole note when
+nothing is selected. The front matter is never included, lines inside code
+blocks are never removed, and one undo puts everything back.
+
 ## What these commands will not touch
 
 - **Fenced code blocks and inline code** are copied through untouched, as is
