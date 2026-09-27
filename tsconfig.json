@@ -11,10 +11,11 @@
     "importHelpers": true,
     "allowImportingTsExtensions": true,
     "lib": [
-      "ES2018",
+      "ES2019",
       "ES2020.String",
       "DOM"
-    ]
+    ],
+    "types": []
   },
   "include": [
     "**/*.ts"
