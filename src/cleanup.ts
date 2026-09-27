@@ -150,6 +150,25 @@ export function removeInvisibles(text: string): string {
 }
 
 /**
+ * Typographic punctuation back to plain keyboard characters: curly quotes
+ * and primes to straight ones, dashes to hyphens, an ellipsis to three
+ * dots. For text headed somewhere that wants plain ASCII: code, a
+ * terminal, a config file, a search box, or a site that mangles `’`.
+ *
+ * Guillemets are left alone: in French, Spanish or German text they are
+ * the quotation marks, not a decoration of `"`. Code is not skipped,
+ * because curly quotes in code are exactly what this is for.
+ */
+export function straightenPunctuation(text: string): string {
+  return text
+    .replace(/[\u2018\u2019\u201A\u201B\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F\u2033]/g, '"')
+    .replace(/\u2014/g, '--')
+    .replace(/[\u2010\u2011\u2012\u2013\u2212]/g, '-')
+    .replace(/\u2026/g, '...');
+}
+
+/**
  * Replaces every link with the text it displays.
  *
  * Written as a scanner rather than a regex because the two upstream bugs here

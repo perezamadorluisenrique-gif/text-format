@@ -30,6 +30,7 @@ import {
   linksToPlainText,
   removeInvisibles,
   removeLineHyphenation,
+  straightenPunctuation,
 } from './src/cleanup.ts';
 
 import { collapseBlankLines, removeBlankLines, removeDuplicateLines, sortLines } from './src/lines.ts';
@@ -146,6 +147,12 @@ const COMMANDS: Command[] = [
     name: 'Remove invisible characters',
     icon: 'eraser',
     run: (t) => removeInvisibles(t),
+  },
+  {
+    id: 'straighten-punctuation',
+    name: 'Straighten quotes and dashes',
+    icon: 'remove-formatting',
+    run: (t) => straightenPunctuation(t),
   },
   {
     id: 'unlink',
