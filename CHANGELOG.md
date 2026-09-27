@@ -4,6 +4,13 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## Unreleased
+
+- New command **Straighten quotes and dashes**: curly quotes and primes become
+  straight ones, dashes become hyphens (`—` becomes `--`) and `…` three dots,
+  for text you are about to paste into code, a terminal or a config file.
+  Guillemets are left alone.
+
 ## 0.3.0
 
 - New line commands: **Sort lines A to Z**, **Sort lines Z to A**, **Remove

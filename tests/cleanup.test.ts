@@ -5,6 +5,7 @@ import {
   joinWrappedLines,
   linksToPlainText,
   removeInvisibles,
+  straightenPunctuation,
   removeLineHyphenation,
 } from '../src/cleanup.ts';
 
@@ -186,4 +187,13 @@ test('linksToPlainText leaves display maths alone', () => {
   const text = '$$\n[a](b)\n$$\n[c](d)';
 
   assert.equal(linksToPlainText(text), '$$\n[a](b)\n$$\nc');
+});
+
+test('straightenPunctuation turns typography back into keyboard characters', () => {
+  assert.equal(
+    straightenPunctuation('“It’s ‘fine’,” she said — then left… pages 3–5, 5′10″, „so“'),
+    `"It's 'fine'," she said -- then left... pages 3-5, 5'10", "so"`,
+  );
+  assert.equal(straightenPunctuation('«bonjour» ‹x›'), '«bonjour» ‹x›');
+  assert.equal(straightenPunctuation('`const a = “x”;`'), '`const a = "x";`');
 });

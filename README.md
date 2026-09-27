@@ -82,6 +82,7 @@ nouns you already typed survive.
 | Join wrapped lines | Merges a hard-wrapped paragraph back into one line, rejoining any word split across the break |
 | Rejoin words split across lines | Undoes the hyphenation without touching the line breaks |
 | Remove invisible characters | Strips soft hyphens, zero-width marks and byte order marks, and turns non-breaking and exotic spaces into ordinary ones |
+| Straighten quotes and dashes | Turns curly quotes and primes into straight ones, dashes into hyphens (`—` into `--`) and `…` into three dots, for text headed into code, a terminal or a config file. Guillemets are left alone |
 | Links to plain text | Replaces every link with the text it displays |
 
 ![A hard-wrapped, hyphenated paragraph pasted from a PDF, joined into one line with Join wrapped lines](https://raw.githubusercontent.com/perezamadorluisenrique-gif/text-format/main/docs/join-lines.gif)
