@@ -4,6 +4,10 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## 0.3.2
+
+- Clears the directory review's type warnings: the TypeScript build now uses ES2019 and no Node typings, exactly as the review does. No change in behaviour.
+
 ## 0.3.1
 
 - New command **Straighten quotes and dashes**: curly quotes and primes become
