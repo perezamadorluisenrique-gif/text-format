@@ -30,8 +30,12 @@ const FILE_EXTENSIONS = [
   'md', 'txt', 'pdf', 'canvas', 'base', 'csv', 'json', 'ya?ml', 'toml', 'xml', 'html?', 'css',
   'm?[jt]sx?', 'cjs', 'py', 'rb', 'rs', 'go', 'java', 'kt', 'swift', 'c', 'h', 'cpp', 'cs', 'php', 'sh', 'sql',
   'png', 'jpe?g', 'gif', 'svg', 'webp', 'mp[34]', 'wav', 'zip', 'docx?', 'xlsx?', 'pptx?', 'epub',
-  'com', 'org', 'net', 'io', 'dev', 'app',
+  'log', 'ini', 'lua', 'tsv', 'rtf', 'odt', 'ods', 'heic', 'ogg', 'flac', 'mov', 'mkv', 'gz', 'exe',
+  'bat', 'ps1', 'dmg', 'apk', 'ipynb', 'lock', 'env',
+  'com', 'org', 'net', 'io', 'dev', 'app', 'edu', 'gov',
 ];
+/** A version number such as `v1.2` or `V2.0.1`; a bare `1.2.3` is already atomic. */
+const VERSION_SOURCE = '[vV]\\d+(?:\\.\\d+)+(?![\\p{L}\\p{N}])';
 const FILE_NAME_SOURCE =
   `[\\p{L}\\p{N}_-]+(?:\\.[\\p{L}\\p{N}_-]+)*\\.(?:${FILE_EXTENSIONS.join('|')})(?![\\p{L}\\p{N}])`;
 
@@ -45,6 +49,7 @@ const PROTECTED_SOURCE = [
   'www\\.\\S+',
   '[\\w.+-]+@[\\w-]+\\.[\\w-]+(?:\\.[\\w-]+)*',
   FILE_NAME_SOURCE,
+  VERSION_SOURCE,
 ].join('|');
 
 /**

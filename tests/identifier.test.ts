@@ -86,3 +86,54 @@ test('the locale decides the dotted and dotless i', () => {
 test('a heading becomes a slug in one step', () => {
   assert.equal(convert('# Getting Started — Quick Guide (2026)', 'slug'), '# getting-started-quick-guide-2026');
 });
+
+test('Train-Case, Pascal_Snake_Case, path/case, Capital Case and no case from plain words', () => {
+  const text = 'user account id';
+  assert.equal(convert(text, 'train'), 'User-Account-Id');
+  assert.equal(convert(text, 'pascal-snake'), 'User_Account_Id');
+  assert.equal(convert(text, 'path'), 'user/account/id');
+  assert.equal(convert(text, 'capital'), 'User Account Id');
+  assert.equal(convert(text, 'no'), 'user account id');
+});
+
+test('the new styles convert from other identifiers and from each other', () => {
+  assert.equal(convert('userAccountId', 'train'), 'User-Account-Id');
+  assert.equal(convert('USER_ACCOUNT_ID', 'capital'), 'User Account Id');
+  assert.equal(convert('User-Account-Id', 'path'), 'user/account/id');
+  assert.equal(convert('user/account/id', 'pascal-snake'), 'User_Account_Id');
+  assert.equal(convert('User_Account_Id', 'no'), 'user account id');
+  assert.equal(convert('Capital Case Text', 'train'), 'Capital-Case-Text');
+});
+
+test('the new styles handle acronyms and digits like the old ones', () => {
+  const text = 'XMLHttpRequest id2';
+  assert.equal(convert(text, 'train'), 'Xml-Http-Request-Id2');
+  assert.equal(convert(text, 'pascal-snake'), 'Xml_Http_Request_Id2');
+  assert.equal(convert(text, 'path'), 'xml/http/request/id2');
+  assert.equal(convert(text, 'capital'), 'Xml Http Request Id2');
+  assert.equal(convert(text, 'no'), 'xml http request id2');
+});
+
+test('the new styles keep unicode letters and apostrophes', () => {
+  assert.equal(convert('émile ÉCOLE ñandú', 'train'), 'Émile-École-Ñandú');
+  assert.equal(convert('émile ÉCOLE ñandú', 'path'), 'émile/école/ñandú');
+  assert.equal(convert("don't stop", 'capital'), 'Dont Stop');
+  assert.equal(convert('Привет мир', 'pascal-snake'), 'Привет_Мир');
+});
+
+test('the new styles follow the locale', () => {
+  assert.equal(convert('istanbul irmak', 'capital', 'tr'), 'İstanbul İrmak');
+  assert.equal(convert('IRMAK', 'no', 'tr'), 'ırmak');
+});
+
+test('the new styles keep line prefixes, code and links, and one line stays one line', () => {
+  assert.equal(
+    convert('- [ ] Fix the `x y` bug\n# My heading\n\nplain text', 'train'),
+    '- [ ] Fix-The `x y` Bug\n# My-Heading\n\nPlain-Text',
+  );
+  assert.equal(convert('see [[Some Note]] now', 'path'), 'see [[Some Note]] now');
+  assert.equal(convert('see the [[Some Note]] now', 'path'), 'see/the [[Some Note]] now');
+  assert.equal(convert('```\nkeep Me\n```', 'capital'), '```\nkeep Me\n```');
+  assert.equal(convert('', 'no'), '');
+  assert.equal(convert('--- !!', 'train'), '--- !!');
+});

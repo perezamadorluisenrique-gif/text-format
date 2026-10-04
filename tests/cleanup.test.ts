@@ -7,6 +7,7 @@ import {
   removeInvisibles,
   straightenPunctuation,
   removeLineHyphenation,
+  replaceLigatures,
 } from '../src/cleanup.ts';
 
 test('joinWrappedLines merges a hard-wrapped paragraph', () => {
@@ -196,4 +197,27 @@ test('straightenPunctuation turns typography back into keyboard characters', () 
   );
   assert.equal(straightenPunctuation('«bonjour» ‹x›'), '«bonjour» ‹x›');
   assert.equal(straightenPunctuation('`const a = “x”;`'), '`const a = "x";`');
+});
+
+test('ligatures from a PDF become their letters', () => {
+  assert.equal(replaceLigatures('ﬁle ﬂow ﬀect oﬃce baﬄe'), 'file flow ffect office baffle');
+  assert.equal(replaceLigatures('ﬅ and ﬆ'), 'st and st');
+  assert.equal(replaceLigatures('conﬁgurﬁﬁ'), 'configurfifi');
+});
+
+test('Dutch IJ and ordinary text are not ligatures to replace', () => {
+  const text = 'Ĳsselmeer en ĳs, café ß fi';
+  assert.equal(replaceLigatures(text), text);
+  assert.equal(replaceLigatures(''), '');
+});
+
+test('ligatures in code and display maths stay as they are', () => {
+  const text = 'ﬁx `ﬁle` ﬂ\n```\nﬁle\n```\n$$\nﬁ\n$$\nﬂow';
+  assert.equal(replaceLigatures(text), 'fix `ﬁle` fl\n```\nﬁle\n```\n$$\nﬁ\n$$\nflow');
+});
+
+test('replacing ligatures is idempotent and keeps line structure', () => {
+  const once = replaceLigatures('- [ ] oﬃce\n> ﬁnal\r\nend');
+  assert.equal(once, '- [ ] office\n> final\r\nend');
+  assert.equal(replaceLigatures(once), once);
 });
