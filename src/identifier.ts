@@ -1,6 +1,7 @@
 /**
  * The identifier cases: camelCase, PascalCase, snake_case, CONSTANT_CASE,
- * kebab-case, dot.case and slugs.
+ * kebab-case, dot.case, Train-Case, Pascal_Snake_Case, path/case, Capital
+ * Case, "no case" and slugs.
  *
  * Unlike the prose cases these rebuild the text: words are found, then
  * glued back together with the style's separator. Each line is converted
@@ -12,7 +13,19 @@
 
 import { type Locale, blockTracker, lower, upper } from './segments.ts';
 
-export type IdentifierStyle = 'camel' | 'pascal' | 'snake' | 'constant' | 'kebab' | 'dot' | 'slug';
+export type IdentifierStyle =
+  | 'camel'
+  | 'pascal'
+  | 'snake'
+  | 'constant'
+  | 'kebab'
+  | 'dot'
+  | 'train'
+  | 'pascal-snake'
+  | 'path'
+  | 'capital'
+  | 'no'
+  | 'slug';
 
 export interface IdentifierOptions {
   /** A BCP 47 tag when the language needs its own case rules, e.g. `tr`. */
@@ -110,6 +123,16 @@ export function joinWords(words: string[], style: IdentifierStyle, locale: Local
       return words.map((word) => lower(word, locale)).join('-');
     case 'dot':
       return words.map((word) => lower(word, locale)).join('.');
+    case 'train':
+      return words.map((word) => capitalise(word, locale)).join('-');
+    case 'pascal-snake':
+      return words.map((word) => capitalise(word, locale)).join('_');
+    case 'path':
+      return words.map((word) => lower(word, locale)).join('/');
+    case 'capital':
+      return words.map((word) => capitalise(word, locale)).join(' ');
+    case 'no':
+      return words.map((word) => lower(word, locale)).join(' ');
     case 'slug':
       return splitWords(stripAccents(words.join(' '))).map((word) => lower(word, locale)).join('-');
   }

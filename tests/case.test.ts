@@ -208,3 +208,24 @@ test('mixed-case names flatten when preservation is off, and in the cycle', () =
   assert.equal(toTitleCase('the iPhone', { preserveAcronyms: false }), 'The Iphone');
   assert.equal(cycleCase('the iPhone'), 'the iphone');
 });
+
+test('dotted file names, domains and versions keep their case', () => {
+  assert.equal(toTitleCase('edit main.ts now'), 'Edit main.ts Now');
+  assert.equal(toTitleCase('visit example.com today'), 'Visit example.com Today');
+  assert.equal(toTitleCase('release v1.2 notes'), 'Release v1.2 Notes');
+  assert.equal(capitalizeWords('open app.config.json and v2.0.1'), 'Open app.config.json And v2.0.1');
+  assert.equal(toTitleCase('read debug.log and the lua.exe'), 'Read debug.log and the lua.exe');
+  assert.equal(toSentenceCase('see v1.2 and main.ts. next, use notes.md'), 'See v1.2 and main.ts. Next, use notes.md');
+});
+
+test('a sentence-final period after a file name or version still ends the sentence', () => {
+  assert.equal(toTitleCase('open main.ts. next one'), 'Open main.ts. Next One');
+  assert.equal(toSentenceCase('see v1.2. the end. next'), 'See v1.2. The end. Next');
+  assert.equal(toTitleCase('the end. Next'), 'The End. Next');
+  assert.equal(toSentenceCase('the end. next'), 'The end. Next');
+});
+
+test('a word that merely contains v and digits is not a version', () => {
+  assert.equal(toTitleCase('the av1.2 codec'), 'The Av1.2 Codec');
+  assert.equal(toTitleCase('use v1.2x here'), 'Use V1.2x Here');
+});

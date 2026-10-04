@@ -150,6 +150,35 @@ export function removeInvisibles(text: string): string {
 }
 
 /**
+ * The Latin ligature presentation forms U+FB00 to U+FB06, which PDFs hand
+ * over as one character each. Search, spellcheck and links do not see
+ * `ﬁle` as `file`. U+FB05 (long s, t) is a historical form of `st`, and so
+ * is U+FB06.
+ *
+ * The Dutch `Ĳ` and `ĳ` (U+0132, U+0133) are not here on purpose: they are
+ * real letters of that alphabet, not a typesetting trick.
+ */
+const LIGATURES: Record<string, string> = {
+  '\uFB00': 'ff',
+  '\uFB01': 'fi',
+  '\uFB02': 'fl',
+  '\uFB03': 'ffi',
+  '\uFB04': 'ffl',
+  '\uFB05': 'st',
+  '\uFB06': 'st',
+};
+
+/**
+ * `ﬁle` and `ﬂow` back to `file` and `flow`: the usual leftover of copying
+ * text out of a PDF. Fenced code, inline code and display maths are left
+ * as they are.
+ */
+export function replaceLigatures(text: string): string {
+  return eachProseSegment(text, (segment) =>
+    segment.replace(/[\uFB00-\uFB06]/g, (ligature) => LIGATURES[ligature]));
+}
+
+/**
  * Typographic punctuation back to plain keyboard characters: curly quotes
  * and primes to straight ones, dashes to hyphens, an ellipsis to three
  * dots. For text headed somewhere that wants plain ASCII: code, a

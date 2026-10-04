@@ -4,6 +4,12 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## 0.4.0
+
+- New command **Replace ligatures**: turns the single-character ligatures a PDF copy leaves behind (ﬁ, ﬂ, ﬀ, ﬃ, ﬄ, ﬅ, ﬆ) into plain letters, so `ﬁle` becomes `file` and search finds it. The Dutch Ĳ and ĳ are real letters and are left alone, and code and display maths are skipped.
+- New cases **Train-Case**, **Pascal_Snake_Case**, **path/case**, **Capital Case** and **no case**, as commands and in the **Change case…** picker.
+- Title case, sentence case and **Capitalize each word** keep version numbers such as `v1.2` and more file types (`debug.log`, `notes.ipynb`, `.gov` domains) as written. File names like `main.ts` already kept their case since 0.1.2.
+
 ## 0.3.2
 
 - Clears the directory review's type warnings: the TypeScript build now uses ES2019 and no Node typings, exactly as the review does. No change in behaviour.

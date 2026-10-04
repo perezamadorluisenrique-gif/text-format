@@ -30,6 +30,7 @@ import {
   linksToPlainText,
   removeInvisibles,
   removeLineHyphenation,
+  replaceLigatures,
   straightenPunctuation,
 } from './src/cleanup.ts';
 
@@ -129,6 +130,11 @@ const COMMANDS: Command[] = [
   identifier('constant-case', 'CONSTANT_CASE', 'arrow-big-up', 'constant'),
   identifier('kebab-case', 'kebab-case', 'minus', 'kebab'),
   identifier('dot-case', 'dot.case', 'dot', 'dot'),
+  identifier('train-case', 'Train-Case', 'train-front', 'train'),
+  identifier('pascal-snake-case', 'Pascal_Snake_Case', 'baseline', 'pascal-snake'),
+  identifier('path-case', 'path/case', 'slash', 'path'),
+  identifier('capital-case', 'Capital Case', 'type', 'capital'),
+  identifier('no-case', 'no case', 'text', 'no'),
   identifier('slug', 'Slug (lowercase, no accents, hyphens)', 'link', 'slug'),
   {
     id: 'join-lines',
@@ -147,6 +153,12 @@ const COMMANDS: Command[] = [
     name: 'Remove invisible characters',
     icon: 'eraser',
     run: (t) => removeInvisibles(t),
+  },
+  {
+    id: 'replace-ligatures',
+    name: 'Replace ligatures',
+    icon: 'case-lower',
+    run: (t) => replaceLigatures(t),
   },
   {
     id: 'straighten-punctuation',

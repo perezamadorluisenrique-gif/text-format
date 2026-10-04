@@ -55,6 +55,11 @@ the current line, and on a blank line it does nothing.
 | CONSTANT_CASE | `USER_ACCOUNT_ID` |
 | kebab-case | `user-account-id` |
 | dot.case | `user.account.id` |
+| Train-Case | `User-Account-Id` |
+| Pascal_Snake_Case | `User_Account_Id` |
+| path/case | `user/account/id` |
+| Capital Case | `User Account Id` |
+| no case | `user account id` |
 | Slug (lowercase, no accents, hyphens) | `user-account-id`, and `Café Über Straße` becomes `cafe-uber-strasse` |
 
 They read each other as well as prose: `userAccountId`, `user_account_id` and
@@ -82,6 +87,7 @@ nouns you already typed survive.
 | Join wrapped lines | Merges a hard-wrapped paragraph back into one line, rejoining any word split across the break |
 | Rejoin words split across lines | Undoes the hyphenation without touching the line breaks |
 | Remove invisible characters | Strips soft hyphens, zero-width marks and byte order marks, and turns non-breaking and exotic spaces into ordinary ones |
+| Replace ligatures | Turns the single-character ligatures a PDF copy leaves behind (`ﬁ`, `ﬂ`, `ﬀ`, `ﬃ`, `ﬄ`, `ﬅ`, `ﬆ`) into plain letters, so `ﬁle` becomes `file` and search finds it. The Dutch `Ĳ` and `ĳ` are real letters and stay. Code and display maths are left alone |
 | Straighten quotes and dashes | Turns curly quotes and primes into straight ones, dashes into hyphens (`—` into `--`) and `…` into three dots, for text headed into code, a terminal or a config file. Guillemets are left alone |
 | Links to plain text | Replaces every link with the text it displays |
 
