@@ -3,6 +3,7 @@ import {
   type EditorChange,
   type EditorPosition,
   type EditorSelection,
+  Modal,
   Notice,
   Plugin,
   PluginSettingTab,
@@ -38,6 +39,18 @@ import { collapseBlankLines, removeBlankLines, removeDuplicateLines, sortLines }
 
 import { frontmatterLineCount } from './src/segments.ts';
 
+import {
+  TIDY_STEPS,
+  TIDY_STEP_LABELS,
+  type TidyResult,
+  type TidyStep,
+  collapseMultipleSpaces,
+  endsInsideCode,
+  removeTrailingWhitespace,
+  tidy,
+  wordRangeAt,
+} from './src/tidy.ts';
+
 interface TextFormatSettings {
   /** A BCP 47 tag, or '' for the rules of the running system. */
   locale: string;
@@ -46,7 +59,29 @@ interface TextFormatSettings {
   stopWords: string;
   removeHyphenOnJoin: boolean;
   keepImageAltText: boolean;
+  /** With no selection, a case command changes the whole line or just the word at the caret. */
+  caseTarget: 'line' | 'word';
+  tidyInvisibles: boolean;
+  tidyLigatures: boolean;
+  tidyJoin: boolean;
+  tidySpaces: boolean;
+  tidyTrailing: boolean;
+  tidyBlank: boolean;
+  /** Keep two trailing spaces before a line break (a Markdown `<br>`). */
+  keepHardBreaks: boolean;
+  confirmTidy: boolean;
+  cleanOnPaste: boolean;
 }
+
+/** The setting behind each Tidy step. */
+const TIDY_KEYS: Record<TidyStep, keyof TextFormatSettings> = {
+  invisibles: 'tidyInvisibles',
+  ligatures: 'tidyLigatures',
+  join: 'tidyJoin',
+  spaces: 'tidySpaces',
+  trailing: 'tidyTrailing',
+  blank: 'tidyBlank',
+};
 
 const DEFAULT_SETTINGS: TextFormatSettings = {
   locale: '',
@@ -54,7 +89,21 @@ const DEFAULT_SETTINGS: TextFormatSettings = {
   stopWords: DEFAULT_STOP_WORDS.join(', '),
   removeHyphenOnJoin: true,
   keepImageAltText: true,
+  caseTarget: 'line',
+  tidyInvisibles: true,
+  tidyLigatures: true,
+  tidyJoin: false,
+  tidySpaces: true,
+  tidyTrailing: true,
+  tidyBlank: true,
+  keepHardBreaks: true,
+  confirmTidy: true,
+  cleanOnPaste: false,
 };
+
+function chosenSteps(settings: TextFormatSettings): TidyStep[] {
+  return TIDY_STEPS.filter((step) => settings[TIDY_KEYS[step]] === true);
+}
 
 /**
  * Languages whose case rules differ from the default mapping. Turkish and
@@ -81,6 +130,8 @@ interface Command {
    * with no selection the command takes the whole note.
    */
   lines?: boolean;
+  /** Changes letter case: with no selection it follows the "line or word" setting. */
+  casing?: boolean;
 }
 
 function identifier(id: string, name: string, icon: string, style: IdentifierStyle): Command {
@@ -89,6 +140,7 @@ function identifier(id: string, name: string, icon: string, style: IdentifierSty
     name,
     icon,
     isCase: true,
+    casing: true,
     run: (t, s) => toIdentifierCase(t, style, { locale: caseOptions(s).locale }),
   };
 }
@@ -105,15 +157,16 @@ function caseOptions(settings: TextFormatSettings): CaseOptions {
 }
 
 const COMMANDS: Command[] = [
-  { id: 'upper', icon: 'case-upper', name: 'Uppercase', isCase: true, run: (t, s) => toUpperCase(t, caseOptions(s)) },
-  { id: 'lower', icon: 'case-lower', name: 'Lowercase', isCase: true, run: (t, s) => toLowerCase(t, caseOptions(s)) },
-  { id: 'title', icon: 'heading', name: 'Title case', isCase: true, run: (t, s) => toTitleCase(t, caseOptions(s)) },
-  { id: 'sentence', icon: 'case-sensitive', name: 'Sentence case', isCase: true, run: (t, s) => toSentenceCase(t, caseOptions(s)) },
+  { id: 'upper', icon: 'case-upper', name: 'Uppercase', isCase: true, casing: true, run: (t, s) => toUpperCase(t, caseOptions(s)) },
+  { id: 'lower', icon: 'case-lower', name: 'Lowercase', isCase: true, casing: true, run: (t, s) => toLowerCase(t, caseOptions(s)) },
+  { id: 'title', icon: 'heading', name: 'Title case', isCase: true, casing: true, run: (t, s) => toTitleCase(t, caseOptions(s)) },
+  { id: 'sentence', icon: 'case-sensitive', name: 'Sentence case', isCase: true, casing: true, run: (t, s) => toSentenceCase(t, caseOptions(s)) },
   {
     id: 'capitalize-words',
     name: 'Capitalize each word',
     icon: 'whole-word',
     isCase: true,
+    casing: true,
     run: (t, s) => capitalizeWords(t, caseOptions(s)),
   },
   {
@@ -121,9 +174,10 @@ const COMMANDS: Command[] = [
     name: 'Capitalize sentences, leaving the rest',
     icon: 'pilcrow',
     isCase: true,
+    casing: true,
     run: (t, s) => capitalizeSentences(t, caseOptions(s)),
   },
-  { id: 'cycle', icon: 'repeat', name: 'Cycle case', run: (t, s) => cycleCase(t, caseOptions(s)) },
+  { id: 'cycle', icon: 'repeat', name: 'Cycle case', casing: true, run: (t, s) => cycleCase(t, caseOptions(s)) },
   identifier('camel-case', 'camelCase', 'code', 'camel'),
   identifier('pascal-case', 'PascalCase', 'braces', 'pascal'),
   identifier('snake-case', 'snake_case', 'underline', 'snake'),
@@ -166,6 +220,10 @@ const COMMANDS: Command[] = [
     icon: 'remove-formatting',
     run: (t) => straightenPunctuation(t),
   },
+  { id: 'remove-trailing-whitespace', name: 'Remove trailing whitespace', icon: 'space', lines: true,
+    run: (t, s) => removeTrailingWhitespace(t, { keepHardBreaks: s.keepHardBreaks }) },
+  { id: 'collapse-spaces', name: 'Collapse multiple spaces', icon: 'chevrons-left-right', lines: true,
+    run: (t) => collapseMultipleSpaces(t) },
   {
     id: 'unlink',
     name: 'Links to plain text',
@@ -190,7 +248,7 @@ const COMMANDS: Command[] = [
   { id: 'remove-blank-lines', name: 'Remove blank lines', icon: 'fold-vertical', lines: true, run: (t) => removeBlankLines(t) },
   {
     id: 'collapse-blank-lines',
-    name: 'Collapse runs of blank lines',
+    name: 'Remove extra blank lines (keep one)',
     icon: 'between-horizontal-start',
     lines: true,
     run: (t) => collapseBlankLines(t),
@@ -209,7 +267,7 @@ function isBefore(a: EditorPosition, b: EditorPosition): boolean {
  * A caret on a blank line yields nothing, which is why this plugin cannot
  * reproduce upstream #110, where uppercasing an empty line froze the app.
  */
-function rangeFor(editor: Editor, selection: EditorSelection, lines = false): [EditorPosition, EditorPosition] | null {
+function rangeFor(editor: Editor, selection: EditorSelection, lines = false, word = false): [EditorPosition, EditorPosition] | null {
   const { anchor, head } = selection;
 
   if (lines) {
@@ -231,6 +289,11 @@ function rangeFor(editor: Editor, selection: EditorSelection, lines = false): [E
   const line = editor.getLine(anchor.line);
   if (line.trim().length === 0) return null;
 
+  if (word) {
+    const span = wordRangeAt(line, anchor.ch);
+    return span === null ? null : [{ line: anchor.line, ch: span[0] }, { line: anchor.line, ch: span[1] }];
+  }
+
   return [{ line: anchor.line, ch: 0 }, { line: anchor.line, ch: line.length }];
 }
 
@@ -248,6 +311,15 @@ export default class TextFormatPlugin extends Plugin {
         editorCallback: (editor: Editor) => this.apply(editor, command),
       });
     }
+
+    this.addCommand({
+      id: 'tidy-note',
+      name: 'Tidy note',
+      icon: 'sparkles',
+      editorCallback: (editor: Editor) => this.tidyNote(editor),
+    });
+
+    this.registerEvent(this.app.workspace.on('editor-paste', (evt, editor) => this.cleanPaste(evt, editor)));
 
     // One hotkey for every case, with each result previewed on the
     // selection before it is applied.
@@ -284,6 +356,83 @@ export default class TextFormatPlugin extends Plugin {
     editor.transaction({ changes });
   }
 
+  /**
+   * Tidy note: the steps chosen in settings, over the selection or the whole
+   * note. What each step would change is shown first, and the edit is one
+   * transaction, so one undo reverts all of it.
+   */
+  tidyNote(editor: Editor): void {
+    const totals = new Map<TidyStep, number>();
+    const command: Command = {
+      id: 'tidy-note',
+      name: 'Tidy note',
+      icon: 'sparkles',
+      lines: true,
+      run: (text, settings) => {
+        const result = tidy(text, this.tidyOptions(settings));
+        for (const { step, count } of result.report) totals.set(step, (totals.get(step) ?? 0) + count);
+        return result.text;
+      },
+    };
+
+    if (chosenSteps(this.settings).length === 0) {
+      new Notice('No tidy steps are turned on. Choose some in the settings.');
+      return;
+    }
+
+    const changes = this.plan(editor, command);
+    if (changes.length === 0) {
+      new Notice('Nothing to tidy.');
+      return;
+    }
+
+    const report = TIDY_STEPS
+      .filter((step) => totals.has(step))
+      .map((step) => ({ step, count: totals.get(step) ?? 0 }));
+    const apply = (): void => editor.transaction({ changes });
+
+    if (this.settings.confirmTidy) new TidyModal(this, report, apply).open();
+    else apply();
+  }
+
+  private tidyOptions(settings: TextFormatSettings) {
+    return {
+      steps: chosenSteps(settings),
+      keepHardBreaks: settings.keepHardBreaks,
+      removeHyphen: settings.removeHyphenOnJoin,
+    };
+  }
+
+  /**
+   * Clean on paste, off unless turned on. Only a plain-text paste: anything
+   * with HTML or files is left to Obsidian, which converts it itself, and
+   * so is anything another handler already took. The clipboard is read, never
+   * written, and nothing happens inside code or frontmatter.
+   */
+  cleanPaste(evt: ClipboardEvent, editor: Editor): void {
+    if (!this.settings.cleanOnPaste || evt.defaultPrevented) return;
+
+    const data = evt.clipboardData;
+    if (data === null || data.files.length > 0 || data.types.includes('text/html')) return;
+
+    const pasted = data.getData('text/plain');
+    if (pasted === '') return;
+
+    const lineCount = editor.lineCount();
+    const bodyStart = frontmatterLineCount((i) => (i < lineCount ? editor.getLine(i) : undefined));
+
+    for (const { anchor, head } of editor.listSelections()) {
+      const start = isBefore(anchor, head) ? anchor : head;
+      if (start.line < bodyStart || endsInsideCode(editor.getRange({ line: 0, ch: 0 }, start))) return;
+    }
+
+    const result = tidy(pasted, this.tidyOptions(this.settings));
+    if (result.text === pasted) return;
+
+    evt.preventDefault();
+    editor.replaceSelection(result.text);
+  }
+
   /** The edits a command would make, without making them. */
   plan(editor: Editor, command: Command): EditorChange[] {
     const changes: EditorChange[] = [];
@@ -295,7 +444,7 @@ export default class TextFormatPlugin extends Plugin {
     const bodyStart = frontmatterLineCount((i) => (i < lineCount ? editor.getLine(i) : undefined));
 
     for (const selection of editor.listSelections()) {
-      const range = rangeFor(editor, selection, command.lines);
+      const range = rangeFor(editor, selection, command.lines, command.casing === true && this.settings.caseTarget === 'word');
       if (range === null) continue;
 
       const [start, to] = range;
@@ -332,6 +481,42 @@ export default class TextFormatPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+  }
+}
+
+/** Confirms a tidy: what each step would change, then Tidy or Cancel. */
+class TidyModal extends Modal {
+  private report: TidyResult['report'];
+  private onConfirm: () => void;
+
+  constructor(plugin: TextFormatPlugin, report: TidyResult['report'], onConfirm: () => void) {
+    super(plugin.app);
+    this.report = report;
+    this.onConfirm = onConfirm;
+  }
+
+  onOpen(): void {
+    const { contentEl } = this;
+    this.setTitle('Tidy note');
+
+    const list = contentEl.createEl('ul');
+    for (const { step, count } of this.report) {
+      list.createEl('li', { text: `${TIDY_STEP_LABELS[step]}: ${count} ${count === 1 ? 'line' : 'lines'}` });
+    }
+
+    new Setting(contentEl)
+      .addButton((button) => button
+        .setButtonText('Tidy')
+        .setCta()
+        .onClick(() => {
+          this.close();
+          this.onConfirm();
+        }))
+      .addButton((button) => button.setButtonText('Cancel').onClick(() => this.close()));
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
   }
 }
 
@@ -403,11 +588,36 @@ const SETTING_TEXT: Record<keyof TextFormatSettings, { name: string; desc: strin
     name: 'Drop the hyphen when joining lines',
     desc: 'A PDF breaks a word as "trans-" and "lation". Turn this off for text where a real compound such as "well-known" is likelier than a broken word.',
   },
+  caseTarget: {
+    name: 'With no selection, change case of',
+    desc: 'The whole line, or only the word at the caret.',
+  },
+  tidyInvisibles: { name: 'Remove invisible characters', desc: 'Zero-width characters and soft hyphens go; non-breaking spaces become spaces.' },
+  tidyLigatures: { name: 'Replace ligatures', desc: 'ﬁ and ﬂ become fi and fl.' },
+  tidyJoin: { name: 'Join wrapped lines', desc: 'Merges a paragraph hard-wrapped across lines. Off by default: it changes the line structure.' },
+  tidySpaces: { name: 'Collapse multiple spaces', desc: 'Runs of spaces between words become one. Indentation, tables and code are left alone.' },
+  tidyTrailing: { name: 'Remove trailing whitespace', desc: 'Spaces and tabs at the end of lines.' },
+  tidyBlank: { name: 'Remove extra blank lines', desc: 'Runs of blank lines become one.' },
+  keepHardBreaks: {
+    name: 'Keep hard line breaks',
+    desc: 'Two trailing spaces before a line of text are a line break in Markdown, so trailing whitespace removal keeps them. Turn this off to strip them too.',
+  },
+  confirmTidy: { name: 'Confirm before tidying', desc: 'Shows how many lines each step would change before applying.' },
+  cleanOnPaste: {
+    name: 'Tidy on paste',
+    desc: 'Runs the steps above on plain text you paste. Never inside code or frontmatter, and pastes that carry formatting are left to Obsidian. Off by default.',
+  },
   keepImageAltText: {
     name: 'Keep image alt text',
     desc: 'Leaves the description behind when an image is turned into plain text, rather than removing the image entirely.',
   },
 };
+
+/** The Tidy settings that are plain on/off switches, in the order shown. */
+const TIDY_TOGGLES = [
+  'tidyInvisibles', 'tidyLigatures', 'tidyJoin', 'tidySpaces', 'tidyTrailing', 'tidyBlank',
+  'keepHardBreaks', 'confirmTidy', 'cleanOnPaste',
+] as const;
 
 class TextFormatSettingTab extends PluginSettingTab {
   private plugin: TextFormatPlugin;
@@ -448,6 +658,15 @@ class TextFormatSettingTab extends PluginSettingTab {
             },
           },
           {
+            ...SETTING_TEXT.caseTarget,
+            control: {
+              type: 'dropdown',
+              key: 'caseTarget',
+              options: { line: 'Whole line', word: 'Word at the caret' },
+              defaultValue: DEFAULT_SETTINGS.caseTarget,
+            },
+          },
+          {
             ...SETTING_TEXT.stopWords,
             control: {
               type: 'textarea',
@@ -481,6 +700,14 @@ class TextFormatSettingTab extends PluginSettingTab {
             },
           },
         ],
+      },
+      {
+        type: 'group',
+        heading: 'Tidy note',
+        items: TIDY_TOGGLES.map((key) => ({
+          ...SETTING_TEXT[key],
+          control: { type: 'toggle', key, defaultValue: DEFAULT_SETTINGS[key] },
+        })),
       },
     ];
   }
@@ -531,6 +758,18 @@ class TextFormatSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
+      .setName(SETTING_TEXT.caseTarget.name)
+      .setDesc(SETTING_TEXT.caseTarget.desc)
+      .addDropdown((dropdown) => dropdown
+        .addOption('line', 'Whole line')
+        .addOption('word', 'Word at the caret')
+        .setValue(settings.caseTarget)
+        .onChange(async (value) => {
+          settings.caseTarget = value === 'word' ? 'word' : 'line';
+          await this.plugin.saveSettings();
+        }));
+
+    new Setting(containerEl)
       .setName(SETTING_TEXT.stopWords.name)
       .setDesc(SETTING_TEXT.stopWords.desc)
       .addTextArea((text) => {
@@ -566,5 +805,19 @@ class TextFormatSettingTab extends PluginSettingTab {
           settings.keepImageAltText = value;
           await this.plugin.saveSettings();
         }));
+
+    new Setting(containerEl).setName('Tidy note').setHeading();
+
+    for (const key of TIDY_TOGGLES) {
+      new Setting(containerEl)
+        .setName(SETTING_TEXT[key].name)
+        .setDesc(SETTING_TEXT[key].desc)
+        .addToggle((toggle) => toggle
+          .setValue(settings[key])
+          .onChange(async (value) => {
+            settings[key] = value;
+            await this.plugin.saveSettings();
+          }));
+    }
   }
 }

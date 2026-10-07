@@ -100,7 +100,9 @@ export function joinWrappedLines(text: string, options: JoinOptions = {}): strin
       continue;
     }
 
-    previous.body = joinBodies(previous.body, line.body.trim(), options);
+    // Only the start is trimmed: a hard break at the end of this line
+    // must survive, or the next line would be merged into it.
+    previous.body = joinBodies(previous.body, line.body.replace(/^[ \t]+/, ''), options);
   }
 
   return output.map((line) => line.quote + line.marker + line.body).join('\n');
@@ -209,7 +211,7 @@ export function linksToPlainText(text: string, options: LinkOptions = {}): strin
 }
 
 /** Runs `fn` over everything that is not code, fenced or inline, or display maths. */
-function eachProseSegment(text: string, fn: (segment: string) => string): string {
+export function eachProseSegment(text: string, fn: (segment: string) => string): string {
   const inBlock = blockTracker();
 
   return text.split('\n').map((line) => {

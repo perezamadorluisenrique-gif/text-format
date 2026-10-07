@@ -9,8 +9,9 @@ Change the case of the text you have selected, and clean up prose that came
 out of a PDF, a scan or a web page.
 
 Everything runs on the text in front of you. There is no network access, no
-telemetry and no paste hook: a command only ever touches the selection you
-give it, and each one is a single undo step.
+telemetry, and nothing runs on its own: a command only ever touches the
+selection you give it, and each one is a single undo step. The one optional
+exception is **Tidy on paste**, which is off until you turn it on.
 
 ![Selecting a note and running Title case from the command palette](https://raw.githubusercontent.com/perezamadorluisenrique-gif/text-format/main/docs/title-case.gif)
 
@@ -93,6 +94,31 @@ nouns you already typed survive.
 
 ![A hard-wrapped, hyphenated paragraph pasted from a PDF, joined into one line with Join wrapped lines](https://raw.githubusercontent.com/perezamadorluisenrique-gif/text-format/main/docs/join-lines.gif)
 
+### Tidy note
+
+One command, **Tidy note**, runs the cleanups you pick in the settings over
+the selection, or the whole note when nothing is selected. A small window first
+says how many lines each step would change (and a notice says "Nothing to
+tidy" when it would change none); confirming applies everything as one undo
+step.
+
+Steps: remove invisible characters, replace ligatures, join wrapped lines,
+collapse multiple spaces, remove trailing whitespace, remove extra blank lines.
+All but joining wrapped lines are on by default.
+
+It leaves fenced code, inline code, display maths, front matter and tables
+alone, never touches indentation, list markers or blockquote depth, and keeps
+Markdown hard line breaks (two trailing spaces before another line of text).
+
+Each of three steps is also a command of its own: **Remove trailing
+whitespace**, **Collapse multiple spaces** (indentation stays) and **Remove
+extra blank lines (keep one)**.
+
+**Tidy on paste** (off by default) runs the same steps on plain text you paste.
+It does nothing inside code or front matter, leaves pastes that carry
+formatting (HTML, files) to Obsidian, never changes the clipboard, steps aside
+if another plugin already handled the paste, and is one undo step.
+
 ### Lines
 
 | Command | What it does |
@@ -101,7 +127,7 @@ nouns you already typed survive.
 | Sort lines Z to A | The same, in reverse |
 | Remove duplicate lines | Keeps the first of each repeated line |
 | Remove blank lines | Removes every empty line |
-| Collapse runs of blank lines | Leaves at most one empty line between paragraphs |
+| Remove extra blank lines (keep one) | Leaves at most one empty line between paragraphs |
 
 These work on every line the selection touches, or on the whole note when
 nothing is selected. The front matter is never included, lines inside code
@@ -129,6 +155,11 @@ blocks are never removed, and one undo puts everything back.
 | Keep acronyms as they are | On | Leaves acronyms such as `NASA` and `PDF`, and mixed-case names such as `iPhone`, `macOS` and `GitHub`, alone. It is ignored when the whole selection is already uppercase, since then every word looks like an acronym |
 | Words title case keeps lowercase | A practical list | No two style guides agree here, so the list is yours to edit. The first and last word of a title are always capitalized whatever the list says |
 | Drop the hyphen when joining lines | On | A PDF breaks a word as `trans-` and `lation`. Turn this off for text where a real compound such as `well-known` is likelier than a broken word |
+| With no selection, change case of | Whole line | Or only the word at the caret |
+| Tidy steps | All on except Join wrapped lines | Which steps Tidy note and Tidy on paste run |
+| Keep hard line breaks | On | Trailing whitespace removal keeps two trailing spaces before a line of text |
+| Confirm before tidying | On | Shows the per-step counts before applying |
+| Tidy on paste | Off | Runs the Tidy steps on plain text you paste |
 | Keep image alt text | On | Leaves the description behind when an image becomes plain text |
 
 ## Scope
@@ -137,9 +168,8 @@ This is a rebuild of the uncontested half of
 [Text Format](https://github.com/Benature/obsidian-text-format), whose last
 release was in July 2024. It deliberately leaves out:
 
-- **Whitespace trimming and format-on-paste.** Several maintained plugins
-  already do this, and rewriting the clipboard as it lands is a different and
-  riskier product than a command you invoke.
+- **Automatic format-on-save.** Whitespace cleanup is a command, and pasting
+  can be tidied only if you opt in; nothing rewrites your notes unasked.
 - **The original's grab bag** — callouts, Anki, LaTeX conversion, table to
   list, heading level shifting, API requests. Those are separate tools wearing
   one name.
