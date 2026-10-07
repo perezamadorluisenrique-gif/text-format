@@ -4,6 +4,14 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## Unreleased
+
+- New command **Tidy note**: one button that runs the cleanups chosen in settings (invisible characters, ligatures, joining wrapped lines, multiple spaces, trailing whitespace, extra blank lines) over the selection or the whole note. It shows how many lines each step would change first, and one undo reverts it. Code, maths, front matter, tables, indentation, list markers and hard line breaks are left alone.
+- New commands **Remove trailing whitespace** and **Collapse multiple spaces**; **Collapse runs of blank lines** is now named **Remove extra blank lines (keep one)**.
+- New opt-in setting **Tidy on paste** (off by default): runs the Tidy steps on pasted plain text, never inside code.
+- New setting **With no selection, change case of**: the whole line (default) or the word at the caret.
+- **Join wrapped lines** no longer swallows a hard line break at the end of an absorbed line.
+
 ## 0.4.0
 
 - New command **Replace ligatures**: turns the single-character ligatures a PDF copy leaves behind (ﬁ, ﬂ, ﬀ, ﬃ, ﬄ, ﬅ, ﬆ) into plain letters, so `ﬁle` becomes `file` and search finds it. The Dutch Ĳ and ĳ are real letters and are left alone, and code and display maths are skipped.
