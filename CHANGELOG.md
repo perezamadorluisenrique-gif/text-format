@@ -4,6 +4,11 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## 0.6.0
+
+- New **Saved replacements** in the settings: keep your own find-and-replace (plain text or regular expression, with `$1` groups and `\n`, optional match case). Each one becomes a command, **Replace: <name>**, and is listed in the new **Run a saved replacement…** picker. It works on the selection or the whole note, skips code and front matter, and is one undo step.
+- A notice says how many replacements were made; an invalid regular expression shows an error line in the settings. Nothing is saved by default.
+
 ## 0.5.0
 
 - New command **Tidy note**: one button that runs the cleanups chosen in settings (invisible characters, ligatures, joining wrapped lines, multiple spaces, trailing whitespace, extra blank lines) over the selection or the whole note. It shows how many lines each step would change first, and one undo reverts it. Code, maths, front matter, tables, indentation, list markers and hard line breaks are left alone.

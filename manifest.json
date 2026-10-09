@@ -1,7 +1,7 @@
 {
   "id": "text-format",
   "name": "Text Case and Cleanup",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "minAppVersion": "1.0.0",
   "description": "Converts the selection between upper, lower, title and sentence case, camelCase, snake_case, kebab-case and slugs. Sorts lines, joins wrapped lines, strips invisible characters, unlinks links and tidies a whole note in one step.",
   "author": "Siulved54",

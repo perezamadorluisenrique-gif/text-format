@@ -37,6 +37,14 @@ import {
 
 import { collapseBlankLines, removeBlankLines, removeDuplicateLines, sortLines } from './src/lines.ts';
 
+import {
+  type SavedReplacement,
+  newReplacementId,
+  normalizeReplacements,
+  replacementCommandName,
+  replacementError,
+  runReplacement,
+} from './src/replace.ts';
 import { frontmatterLineCount } from './src/segments.ts';
 
 import {
@@ -71,6 +79,8 @@ interface TextFormatSettings {
   keepHardBreaks: boolean;
   confirmTidy: boolean;
   cleanOnPaste: boolean;
+  /** The user's own find-and-replace commands. None ship by default. */
+  replacements: SavedReplacement[];
 }
 
 /** The setting behind each Tidy step. */
@@ -99,6 +109,7 @@ const DEFAULT_SETTINGS: TextFormatSettings = {
   keepHardBreaks: true,
   confirmTidy: true,
   cleanOnPaste: false,
+  replacements: [],
 };
 
 function chosenSteps(settings: TextFormatSettings): TidyStep[] {
@@ -132,6 +143,12 @@ interface Command {
   lines?: boolean;
   /** Changes letter case: with no selection it follows the "line or word" setting. */
   casing?: boolean;
+  /**
+   * Works on the selection exactly as selected, or on the whole note when
+   * nothing is selected. A selection that starts or ends inside code is left
+   * alone, because the text there cannot be told apart from prose.
+   */
+  noteWide?: boolean;
 }
 
 function identifier(id: string, name: string, icon: string, style: IdentifierStyle): Command {
@@ -260,6 +277,12 @@ function isBefore(a: EditorPosition, b: EditorPosition): boolean {
   return a.line !== b.line ? a.line < b.line : a.ch < b.ch;
 }
 
+/** True when `from`..`to` spans the whole note, which a trailing open fence must not block. */
+function isWholeNote(editor: Editor, from: EditorPosition, to: EditorPosition): boolean {
+  const last = editor.lastLine();
+  return from.line === 0 && from.ch === 0 && to.line === last && to.ch === editor.getLine(last).length;
+}
+
 /**
  * The text a command works on: the selection, or the whole current line when
  * there is no selection.
@@ -267,8 +290,16 @@ function isBefore(a: EditorPosition, b: EditorPosition): boolean {
  * A caret on a blank line yields nothing, which is why this plugin cannot
  * reproduce upstream #110, where uppercasing an empty line froze the app.
  */
-function rangeFor(editor: Editor, selection: EditorSelection, lines = false, word = false): [EditorPosition, EditorPosition] | null {
+function rangeFor(editor: Editor, selection: EditorSelection, lines = false, word = false, note = false): [EditorPosition, EditorPosition] | null {
   const { anchor, head } = selection;
+
+  if (note) {
+    if (anchor.line === head.line && anchor.ch === head.ch) {
+      const last = editor.lastLine();
+      return [{ line: 0, ch: 0 }, { line: last, ch: editor.getLine(last).length }];
+    }
+    return isBefore(anchor, head) ? [anchor, head] : [head, anchor];
+  }
 
   if (lines) {
     const empty = anchor.line === head.line && anchor.ch === head.ch;
@@ -332,7 +363,90 @@ export default class TextFormatPlugin extends Plugin {
       },
     });
 
+    this.addCommand({
+      id: 'run-saved-replacement',
+      name: 'Run a saved replacement…',
+      icon: 'replace-all',
+      editorCallback: (editor: Editor) => {
+        if (this.settings.replacements.length === 0) {
+          new Notice('No saved replacements yet. Add some in the plugin settings.');
+          return;
+        }
+        new ReplacementPicker(this, editor).open();
+      },
+    });
+
+    this.syncReplacementCommands();
+
     this.addSettingTab(new TextFormatSettingTab(this));
+  }
+
+  /**
+   * Makes the command list match the saved replacements: one "Replace: name"
+   * command each, so adding, renaming or deleting one in the settings takes
+   * effect at once. A command's id comes from the replacement's own id, so a
+   * hotkey survives a rename. Registering an id again replaces its name; a
+   * command whose replacement was deleted, or has no name, hides itself
+   * (the check below returns false) rather than being removed, because
+   * `removeCommand` needs a newer Obsidian than this plugin supports.
+   */
+  syncReplacementCommands(): void {
+    for (const replacement of this.settings.replacements) {
+      if (replacement.name.trim() === '') continue;
+
+      const id = `replace-${replacement.id}`;
+      this.addCommand({
+        id,
+        name: replacementCommandName(replacement),
+        icon: 'replace',
+        editorCheckCallback: (checking: boolean, editor: Editor) => {
+          const current = this.settings.replacements.find((r) => r.id === replacement.id);
+          if (current === undefined || current.name.trim() === '') return false;
+          if (!checking) this.runSavedReplacement(editor, current.id);
+          return true;
+        },
+      });
+    }
+  }
+
+  /**
+   * Runs one saved replacement over the selection, or the whole note, as one
+   * transaction. It is looked up by id when it runs, so edits made in the
+   * settings apply without re-registering the command.
+   */
+  runSavedReplacement(editor: Editor, id: string): void {
+    const replacement = this.settings.replacements.find((r) => r.id === id);
+    if (replacement === undefined) return;
+
+    const problem = replacementError(replacement);
+    if (problem !== null) {
+      new Notice(`Replace: ${replacement.name.trim() || 'unnamed'}: ${problem}`);
+      return;
+    }
+
+    let total = 0;
+    const command: Command = {
+      id: `replace-${id}`,
+      name: replacementCommandName(replacement),
+      icon: 'replace',
+      noteWide: true,
+      run: (text) => {
+        const result = runReplacement(text, replacement);
+        total += result.count;
+        return result.text;
+      },
+    };
+
+    const changes = this.plan(editor, command);
+    if (changes.length === 0) {
+      new Notice(this.skippedInCode
+        ? 'The selection starts or ends inside code, so it was left alone.'
+        : `No matches for "${replacement.name.trim()}".`);
+      return;
+    }
+
+    editor.transaction({ changes });
+    new Notice(`Made ${total} ${total === 1 ? 'replacement' : 'replacements'}.`);
   }
 
   /**
@@ -433,10 +547,19 @@ export default class TextFormatPlugin extends Plugin {
     editor.replaceSelection(result.text);
   }
 
+  /** Set by `plan` when a selection was passed over because it begins or ends inside code. */
+  private skippedInCode = false;
+
+  private endsInCode(editor: Editor, from: EditorPosition, to: EditorPosition): boolean {
+    const start = { line: 0, ch: 0 };
+    return endsInsideCode(editor.getRange(start, from)) || endsInsideCode(editor.getRange(start, to));
+  }
+
   /** The edits a command would make, without making them. */
   plan(editor: Editor, command: Command): EditorChange[] {
     const changes: EditorChange[] = [];
     const seen = new Set<string>();
+    this.skippedInCode = false;
 
     // Frontmatter is data, not prose: a selection that reaches into it,
     // Select all being the usual one, is trimmed to start below it.
@@ -444,7 +567,7 @@ export default class TextFormatPlugin extends Plugin {
     const bodyStart = frontmatterLineCount((i) => (i < lineCount ? editor.getLine(i) : undefined));
 
     for (const selection of editor.listSelections()) {
-      const range = rangeFor(editor, selection, command.lines, command.casing === true && this.settings.caseTarget === 'word');
+      const range = rangeFor(editor, selection, command.lines, command.casing === true && this.settings.caseTarget === 'word', command.noteWide === true);
       if (range === null) continue;
 
       const [start, to] = range;
@@ -457,6 +580,11 @@ export default class TextFormatPlugin extends Plugin {
       const key = `${from.line}:${from.ch}-${to.line}:${to.ch}`;
       if (seen.has(key)) continue;
       seen.add(key);
+
+      if (command.noteWide === true && !isWholeNote(editor, from, to) && this.endsInCode(editor, from, to)) {
+        this.skippedInCode = true;
+        continue;
+      }
 
       const original = editor.getRange(from, to);
       const formatted = command.run(original, this.settings);
@@ -477,6 +605,7 @@ export default class TextFormatPlugin extends Plugin {
     // narrowed before it is merged over the defaults.
     const stored = (await this.loadData()) as Partial<TextFormatSettings> | null;
     this.settings = { ...DEFAULT_SETTINGS, ...stored };
+    this.settings.replacements = normalizeReplacements(stored?.replacements);
   }
 
   async saveSettings(): Promise<void> {
@@ -566,12 +695,43 @@ class CasePicker extends SuggestModal<Command> {
   }
 }
 
+/** Every saved replacement in one list, for one hotkey that reaches all of them. */
+class ReplacementPicker extends SuggestModal<SavedReplacement> {
+  private plugin: TextFormatPlugin;
+  private editor: Editor;
+
+  constructor(plugin: TextFormatPlugin, editor: Editor) {
+    super(plugin.app);
+    this.plugin = plugin;
+    this.editor = editor;
+    this.setPlaceholder('Pick a saved replacement to run');
+  }
+
+  getSuggestions(query: string): SavedReplacement[] {
+    const wanted = query.toLowerCase().trim();
+    return this.plugin.settings.replacements.filter((r) =>
+      `${r.name} ${r.find}`.toLowerCase().includes(wanted));
+  }
+
+  renderSuggestion(replacement: SavedReplacement, el: HTMLElement): void {
+    el.createDiv({ text: replacement.name.trim() === '' ? '(no name)' : replacement.name });
+    el.createEl('small', {
+      text: `${replacement.find} → ${replacement.replace}`,
+      cls: 'text-format-preview',
+    });
+  }
+
+  onChooseSuggestion(replacement: SavedReplacement): void {
+    this.plugin.runSavedReplacement(this.editor, replacement.id);
+  }
+}
+
 /**
  * Each setting's name and description, written once. The declarative
  * definitions below and the `display()` fallback both read from here, so the
  * two renderings cannot drift apart.
  */
-const SETTING_TEXT: Record<keyof TextFormatSettings, { name: string; desc: string }> = {
+const SETTING_TEXT: Record<Exclude<keyof TextFormatSettings, 'replacements'>, { name: string; desc: string }> = {
   locale: {
     name: 'Language rules',
     desc: 'Turkish and Azerbaijani map the dotted and dotless i differently from every other language.',
@@ -618,6 +778,9 @@ const TIDY_TOGGLES = [
   'tidyInvisibles', 'tidyLigatures', 'tidyJoin', 'tidySpaces', 'tidyTrailing', 'tidyBlank',
   'keepHardBreaks', 'confirmTidy', 'cleanOnPaste',
 ] as const;
+
+const REPLACEMENTS_DESC =
+  'Each replacement becomes a command, "Replace: <name>", that you can give a hotkey, and is listed in "Run a saved replacement…". It works on the selection, or on the whole note when nothing is selected, and never touches code or front matter.';
 
 class TextFormatSettingTab extends PluginSettingTab {
   private plugin: TextFormatPlugin;
@@ -708,6 +871,21 @@ class TextFormatSettingTab extends PluginSettingTab {
           ...SETTING_TEXT[key],
           control: { type: 'toggle', key, defaultValue: DEFAULT_SETTINGS[key] },
         })),
+      },
+      {
+        type: 'group',
+        heading: 'Saved replacements',
+        items: [
+          {
+            name: 'Your find-and-replace commands',
+            desc: REPLACEMENTS_DESC,
+            aliases: ['find', 'replace', 'regex', 'regular expression', 'substitute'],
+            // The editor draws its own rows inside this one.
+            render: (setting) => {
+              this.renderReplacements(setting.settingEl);
+            },
+          },
+        ],
       },
     ];
   }
@@ -819,5 +997,111 @@ class TextFormatSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           }));
     }
+
+    new Setting(containerEl).setName('Saved replacements').setHeading();
+    this.renderReplacements(containerEl.createDiv());
+  }
+
+  /**
+   * The list editor for saved replacements, drawn into `host`. Both the
+   * declarative settings and the older `display()` use it, and it redraws
+   * itself after adding or deleting a row.
+   */
+  private renderReplacements(host: HTMLElement): void {
+    host.empty();
+    host.addClass('text-format-replacements');
+    const plugin = this.plugin;
+    const redraw = (): void => this.renderReplacements(host);
+
+    host.createEl('p', { text: REPLACEMENTS_DESC, cls: 'setting-item-description' });
+
+    for (const replacement of plugin.settings.replacements) {
+      const card = host.createDiv({ cls: 'text-format-replacement' });
+      const error = card.createDiv({ cls: 'text-format-replacement-error' });
+      const showError = (): void => {
+        const problem = replacement.find === '' ? null : replacementError(replacement);
+        error.setText(problem ?? '');
+        error.toggleClass('is-hidden', problem === null);
+      };
+
+      new Setting(card)
+        .setName('Name')
+        .setDesc('The command is called "Replace: <name>". Without a name there is no command.')
+        .addText((text) => text
+          .setPlaceholder('Fix dashes')
+          .setValue(replacement.name)
+          .onChange(async (value) => {
+            replacement.name = value;
+            await plugin.saveSettings();
+            plugin.syncReplacementCommands();
+          }))
+        .addExtraButton((button) => button
+          .setIcon('trash-2')
+          .then((b) => b.extraSettingsEl.setAttribute('aria-label', 'Delete this replacement'))
+          .onClick(async () => {
+            plugin.settings.replacements = plugin.settings.replacements.filter((r) => r.id !== replacement.id);
+            await plugin.saveSettings();
+            plugin.syncReplacementCommands();
+            redraw();
+          }));
+
+      new Setting(card)
+        .setName('Find')
+        .addText((text) => text
+          .setValue(replacement.find)
+          .onChange(async (value) => {
+            replacement.find = value;
+            await plugin.saveSettings();
+            showError();
+          }));
+
+      new Setting(card)
+        .setName('Replace with')
+        .setDesc('Leave empty to delete the matches. With regular expression on, $1 is the first group and \\n a line break.')
+        .addText((text) => text
+          .setValue(replacement.replace)
+          .onChange(async (value) => {
+            replacement.replace = value;
+            await plugin.saveSettings();
+          }));
+
+      new Setting(card)
+        .setName('Regular expression')
+        .addToggle((toggle) => toggle
+          .setValue(replacement.regex)
+          .onChange(async (value) => {
+            replacement.regex = value;
+            await plugin.saveSettings();
+            showError();
+          }));
+
+      new Setting(card)
+        .setName('Match case')
+        .addToggle((toggle) => toggle
+          .setValue(replacement.matchCase)
+          .onChange(async (value) => {
+            replacement.matchCase = value;
+            await plugin.saveSettings();
+          }));
+
+      showError();
+    }
+
+    new Setting(host)
+      .addButton((button) => button
+        .setButtonText('Add a replacement')
+        .setCta()
+        .onClick(async () => {
+          plugin.settings.replacements.push({
+            id: newReplacementId(plugin.settings.replacements),
+            name: '',
+            find: '',
+            replace: '',
+            regex: false,
+            matchCase: false,
+          });
+          await plugin.saveSettings();
+          redraw();
+        }));
   }
 }
