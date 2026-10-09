@@ -4,7 +4,7 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
-## Unreleased
+## 0.6.0
 
 - New **Saved replacements** in the settings: keep your own find-and-replace (plain text or regular expression, with `$1` groups and `\n`, optional match case). Each one becomes a command, **Replace: <name>**, and is listed in the new **Run a saved replacement…** picker. It works on the selection or the whole note, skips code and front matter, and is one undo step.
 - A notice says how many replacements were made; an invalid regular expression shows an error line in the settings. Nothing is saved by default.
