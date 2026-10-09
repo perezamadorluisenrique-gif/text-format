@@ -15,3 +15,25 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Saved replacements: the editor draws its own rows inside one setting row. */
+.text-format-replacements {
+  display: block;
+}
+
+.text-format-replacement {
+  margin-bottom: var(--size-4-3);
+  padding: 0 var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+
+.text-format-replacement-error {
+  margin-top: var(--size-4-2);
+  color: var(--text-error);
+  font-size: var(--font-ui-small);
+}
+
+.text-format-replacement-error.is-hidden {
+  display: none;
+}

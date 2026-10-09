@@ -119,6 +119,34 @@ It does nothing inside code or front matter, leaves pastes that carry
 formatting (HTML, files) to Obsidian, never changes the clipboard, steps aside
 if another plugin already handled the paste, and is one undo step.
 
+### Your own find-and-replace
+
+For the fix you make again and again, keep it as a command. In the settings,
+under **Saved replacements**, add a replacement with a name, the text to find,
+the text to put in its place, and two options: **Regular expression** and
+**Match case**. Each one becomes its own command, **Replace: <name>**, which
+you can give a hotkey, and is also listed in **Run a saved replacement…**.
+Adding, renaming or deleting one takes effect at once, without a reload.
+
+A replacement works on the selection, or on the whole note when nothing is
+selected. It is one undo step, and a notice says how many replacements it made.
+Nothing is saved by default.
+
+Example: a replacement named `Dates to ISO`, with **Regular expression** on,
+that finds `(\d{2})/(\d{2})/(\d{4})` and replaces it with `$3-$2-$1`, turns
+`31/12/2026` into `2026-12-31`.
+
+- Without **Regular expression**, the find and replace text are taken exactly as
+  typed, so `.` and `$` mean themselves.
+- With it, `$1`, `$2`... are the groups of the match, `$&` is the whole match,
+  and `\n` in the replace text is a line break. An empty replace text deletes
+  the matches.
+- **Match case** is off by default, so `cat` also finds `Cat`.
+- A regular expression that is not valid shows an error line under it in the
+  settings, and its command only shows a notice; it never changes the note.
+- Matches never span two lines. A selection that starts or ends inside code is
+  left alone.
+
 ### Lines
 
 | Command | What it does |
@@ -136,7 +164,7 @@ blocks are never removed, and one undo puts everything back.
 ## What these commands will not touch
 
 - **Fenced code blocks and inline code** are copied through untouched, as is
-  inline maths.
+  inline maths. Saved replacements skip code and front matter too.
 - **URLs, wikilinks, autolinks and e-mail addresses** keep their case, because
   lowering a URL can break it.
 - **A line's markdown prefix** — quote markers, bullets, ordered numbers, task
@@ -160,6 +188,7 @@ blocks are never removed, and one undo puts everything back.
 | Keep hard line breaks | On | Trailing whitespace removal keeps two trailing spaces before a line of text |
 | Confirm before tidying | On | Shows the per-step counts before applying |
 | Tidy on paste | Off | Runs the Tidy steps on plain text you paste |
+| Saved replacements | None | Your own find-and-replace commands, described above |
 | Keep image alt text | On | Leaves the description behind when an image becomes plain text |
 
 ## Scope
