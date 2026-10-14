@@ -9,6 +9,7 @@
  */
 
 import { eachProseSegment } from './cleanup.ts';
+import { t } from './i18n.ts';
 
 export interface SavedReplacement {
   /** Stable key behind the command id, so a hotkey survives a rename. */
@@ -42,14 +43,14 @@ function escapeRegExp(text: string): string {
 
 /** The regular expression a replacement searches with, or an error message. */
 export function buildPattern(r: Pick<SavedReplacement, 'find' | 'regex' | 'matchCase'>): RegExp | string {
-  if (r.find === '') return 'Find text is empty.';
+  if (r.find === '') return t('error.findEmpty');
   const flags = r.matchCase ? 'g' : 'gi';
 
   try {
     return compile(r.regex ? r.find : escapeRegExp(r.find), flags);
   } catch (error) {
     const reason = error instanceof Error ? error.message.replace(/^Invalid regular expression:\s*/, '') : 'invalid';
-    return `Not a valid regular expression: ${reason}`;
+    return t('error.invalidRegex', { reason });
   }
 }
 
@@ -179,5 +180,5 @@ export function newReplacementId(existing: readonly SavedReplacement[], random: 
 
 /** The command name for a replacement; the host adds the plugin name in front. */
 export function replacementCommandName(r: SavedReplacement): string {
-  return `Replace: ${r.name.trim()}`;
+  return t('command.replace', { name: r.name.trim() });
 }

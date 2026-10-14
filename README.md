@@ -15,6 +15,8 @@ exception is **Tidy on paste**, which is off until you turn it on.
 
 ![Selecting a note and running Title case from the command palette](https://raw.githubusercontent.com/perezamadorluisenrique-gif/text-format/main/docs/title-case.gif)
 
+**Interface languages:** English, 简体中文, 日本語, 한국어, Español, Deutsch, Français, Português (Brasil) and Русский, following Obsidian's language setting. A translation that reads wrong? [Open an issue](https://github.com/perezamadorluisenrique-gif/text-format/issues/new/choose) with the text and what it should say.
+
 ## Installing
 
 In Obsidian, open Settings -> Community plugins -> Browse, search for
