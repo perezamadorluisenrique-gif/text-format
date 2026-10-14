@@ -123,3 +123,23 @@ test('finds the word under or next to the caret', () => {
   assert.equal(wordRangeAt('a  b', 2), null);
   assert.equal(wordRangeAt('', 0), null);
 });
+
+test('tidy reaches its result in one run', () => {
+  // A space and a tab are no hard break, so the line joins now rather than
+  // after "Remove trailing whitespace" strips them.
+  const once = tidy('one \t\ntwo', { steps: TIDY_STEPS }).text;
+  assert.equal(once, 'one two');
+  // An empty heading or list item is structure, with or without its space.
+  for (const text of ['text\n# \nmore', 'text\n- \nmore', 'text\n1. \nmore', 'text\n- [ ] \nmore']) {
+    const first = tidy(text, { steps: TIDY_STEPS }).text;
+    assert.equal(tidy(first, { steps: TIDY_STEPS }).text, first, text);
+  }
+  // Without hard breaks, two trailing spaces hold nothing apart.
+  assert.equal(tidy('one  \ntwo', { steps: TIDY_STEPS, keepHardBreaks: false }).text, 'one two');
+  assert.equal(tidy('one  \ntwo', { steps: TIDY_STEPS }).text, 'one  \ntwo');
+});
+
+test('tidy leaves code in a callout alone', () => {
+  const note = '> ```md\n> Multiple    spaces\n> \n> \n> and lines\n> ```';
+  assert.equal(tidy(note, { steps: TIDY_STEPS }).text, note);
+});

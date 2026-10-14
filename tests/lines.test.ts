@@ -43,3 +43,9 @@ test('collapses runs of blank lines to one', () => {
   assert.equal(collapseBlankLines('a\n\n\n\nb\n\nc'), 'a\n\nb\n\nc');
   assert.equal(collapseBlankLines('```\n\n\n```\n\n\nx'), '```\n\n\n```\n\nx');
 });
+
+test('duplicate and blank lines inside callout code or display maths stay', () => {
+  const note = '> ```\n> a\n> a\n>\n>\n> ```\n$$\nx\n\n\nx\n$$';
+  assert.equal(removeDuplicateLines(note), note);
+  assert.equal(removeBlankLines(note), note);
+});

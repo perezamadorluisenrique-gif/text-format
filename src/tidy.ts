@@ -181,7 +181,10 @@ export function tidy(input: string, options: TidyOptions): TidyResult {
 
   run('invisibles', (t) => eachProseSegment(t, removeInvisibles));
   run('ligatures', replaceLigatures);
-  run('join', (t) => joinWrappedLines(t, { removeHyphen: options.removeHyphen }));
+  // When trailing spaces are about to go, they hold no line apart: joining
+  // around them now gives what a second run would.
+  const keepHardBreaks = !(wanted.has('trailing') && options.keepHardBreaks === false);
+  run('join', (t) => joinWrappedLines(t, { removeHyphen: options.removeHyphen, keepHardBreaks }));
   run('spaces', collapseMultipleSpaces);
   run('trailing', (t) => removeTrailingWhitespace(t, { keepHardBreaks: options.keepHardBreaks }));
   run('blank', collapseBlankLines);

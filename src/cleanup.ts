@@ -17,6 +17,11 @@ export interface JoinOptions {
    * because that is what a PDF does; see the note on `joinWrappedLines`.
    */
   removeHyphen?: boolean;
+  /**
+   * Two trailing spaces are a hard break that keeps the next line apart. On
+   * by default; "Tidy note" turns it off when it is about to strip them.
+   */
+  keepHardBreaks?: boolean;
 }
 
 export interface LinkOptions {
@@ -25,14 +30,17 @@ export interface LinkOptions {
 }
 
 /** Lines that are structure, not prose, and so never merge with a neighbour. */
-const STRUCTURAL = /^[ \t]*(?:#{1,6}[ \t]|={2,}[ \t]*$|-{3,}[ \t]*$|\*{3,}[ \t]*$|_{3,}[ \t]*$|\||[ \t]*$)/;
+const STRUCTURAL = /^[ \t]*(?:#{1,6}(?:[ \t]|$)|={2,}[ \t]*$|-{3,}[ \t]*$|\*{3,}[ \t]*$|_{3,}[ \t]*$|\||[ \t]*$)/;
 
 /** Quote markers, then a bullet or ordered marker, then an optional checkbox. */
 const LINE_PREFIX =
-  /^([ \t]*(?:>[ \t]*)*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX/-][ \t]*\][ \t]+)?|#{1,6}[ \t]+)?([\s\S]*)$/;
+  /^([ \t]*(?:>[ \t]*)*)((?:[-*+]|\d+[.)])(?:[ \t]+(?:\[[ xX/-][ \t]*\](?:[ \t]+|$))?|$)|#{1,6}[ \t]+)?([\s\S]*)$/;
 
-/** A markdown hard line break: two trailing spaces, or a trailing backslash. */
-const HARD_BREAK = /(?:[ \t]{2}|\\)$/;
+/**
+ * A markdown hard line break: two trailing spaces, or a trailing backslash.
+ * Tabs make no break, and "Remove trailing whitespace" strips them.
+ */
+const HARD_BREAK = /(?: {2}|\\)$/;
 
 const CJK = /[぀-ヿ㐀-䶿一-鿿豈-﫿가-힯]/;
 
@@ -93,7 +101,7 @@ export function joinWrappedLines(text: string, options: JoinOptions = {}): strin
       line.body.trim().length > 0 &&
       line.marker === '' &&
       line.quote.trim() === previous.quote.trim() &&
-      !HARD_BREAK.test(previous.body);
+      (options.keepHardBreaks === false || !HARD_BREAK.test(previous.body));
 
     if (!canJoin) {
       output.push(line);
@@ -140,14 +148,37 @@ export function removeLineHyphenation(text: string): string {
  * Soft hyphens and zero-width marks break search and spellcheck while looking
  * like nothing at all, and a non-breaking space is not the space markdown
  * parses. `U+3000`, the ideographic space, is left alone: in CJK text it is a
- * real character, not an artefact.
+ * real character, not an artefact. So are the zero-width joiner and non-joiner
+ * between two letters of a script that uses them (Persian `می‌خواهم`, Hindi,
+ * Malayalam) or between emoji (`👩‍💻`), where they change what is shown.
+ * Wikilinks, link targets and URLs keep every character, since the name of the
+ * note or page they point to is spelled with them.
  */
 export function removeInvisibles(text: string): string {
   return text
     .replace(/\r\n?/g, '\n')
-    // Written as escapes, with the zero-width joiner last, so the characters
-    // stay visible in a diff and the class is not read as a joined sequence.
-    .replace(/[\u00AD\u200B\u200C\u2060\uFEFF\u200D]/g, '')
+    .split(LINK_SPANS)
+    .map((part, i) => (i % 2 === 1 ? part : removeInvisiblesFromProse(part)))
+    .join('');
+}
+
+/** Wikilinks and embeds, the target of a Markdown link, and bare URLs. */
+const LINK_SPANS = /(!?\[\[[^\]\n]*\]\]|\]\([^)\n]*\)|https?:\/\/[^\s<>]+)/;
+
+/** A character a joiner joins to: a letter or mark outside ASCII, or part of an emoji (a symbol, a skin tone, a variation selector). */
+const JOINABLE = /\p{M}|\p{So}|[\u{1F3FB}-\u{1F3FF}]|\uFE0F|(?![A-Za-z])\p{L}/u;
+
+function removeInvisiblesFromProse(text: string): string {
+  const chars = Array.from(text);
+  return chars
+    .map((char, i) => {
+      // Written as escapes, with the zero-width joiner last, so the characters
+      // stay visible in a diff and the class is not read as a joined sequence.
+      if (!/[\u00AD\u200B\u200C\u2060\uFEFF\u200D]/.test(char)) return char;
+      const joins = (char === '\u200C' || char === '\u200D') && JOINABLE.test(chars[i - 1] ?? '') && JOINABLE.test(chars[i + 1] ?? '');
+      return joins ? char : '';
+    })
+    .join('')
     .replace(/[\u00A0\u2000-\u200A\u2007\u202F\u205F]/g, ' ');
 }
 

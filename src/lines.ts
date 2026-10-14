@@ -8,35 +8,26 @@
  * and an ordered list is renumbered afterwards. The comparison is natural
  * (`item 2` before `item 10`) and ignores case and accents.
  *
- * Lines inside fenced code blocks are never removed.
+ * Lines inside fenced code blocks and display maths are never removed.
  */
+
+import { blockTracker } from './segments.ts';
 
 export type SortOrder = 'asc' | 'desc';
 
-const FENCE = /^\s*(`{3,}|~{3,})/;
 const LIST_MARKER = /^(\s*)([-*+]|(\d+)([.)]))(\s+)(\[.\]\s+)?/;
 
 function indentOf(line: string): number {
   return (/^[ \t]*/.exec(line)?.[0] ?? '').replace(/\t/g, '    ').length;
 }
 
-/** For each line, whether it sits inside a fenced code block (fences included). */
+/**
+ * For each line, whether it sits inside a fenced code block or `$$` maths,
+ * delimiters included, in a quote or callout as well.
+ */
 function inCode(lines: string[]): boolean[] {
-  const result: boolean[] = [];
-  let fence: string | null = null;
-  for (const line of lines) {
-    const open = FENCE.exec(line);
-    if (fence !== null) {
-      result.push(true);
-      if (open && open[1][0] === fence[0] && open[1].length >= fence.length) fence = null;
-    } else if (open) {
-      fence = open[1];
-      result.push(true);
-    } else {
-      result.push(false);
-    }
-  }
-  return result;
+  const inBlock = blockTracker();
+  return lines.map((line) => inBlock(line));
 }
 
 /** What a line is compared by: its text without list marker or checkbox. */

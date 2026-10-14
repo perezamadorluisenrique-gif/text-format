@@ -221,3 +221,16 @@ test('replacing ligatures is idempotent and keeps line structure', () => {
   assert.equal(once, '- [ ] office\n> final\r\nend');
   assert.equal(replaceLigatures(once), once);
 });
+
+test('removeInvisibles keeps the joiners that join letters or emoji', () => {
+  // Persian needs the zero-width non-joiner; emoji sequences need the joiner.
+  assert.equal(removeInvisibles('می‌خواهم'), 'می‌خواهم');
+  assert.equal(removeInvisibles('👩‍💻 and 👍🏽‍'), '👩‍💻 and 👍🏽');
+  // Between Latin letters, or next to a space, they are residue.
+  assert.equal(removeInvisibles('a‌b ‍ c'), 'ab  c');
+});
+
+test('removeInvisibles leaves link targets and URLs alone', () => {
+  const note = '[[پایگاه‌ها|پایگاه‌ها]] [x](a​b.md) https://e.com/a­b so­ft';
+  assert.equal(removeInvisibles(note), '[[پایگاه‌ها|پایگاه‌ها]] [x](a​b.md) https://e.com/a­b soft');
+});

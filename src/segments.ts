@@ -14,7 +14,7 @@ export interface Token {
 
 /**
  * Spans a command copies through untouched: inline code, inline math,
- * wikilinks, the target half of a markdown link, autolinks, bare URLs and
+ * HTML tags, Templater commands, block ids, wikilinks, the target half of a markdown link, autolinks, bare URLs and
  * e-mail addresses.
  *
  * Lower-casing a URL can break it and re-casing code changes its meaning,
@@ -40,8 +40,19 @@ const FILE_NAME_SOURCE =
   `[\\p{L}\\p{N}_-]+(?:\\.[\\p{L}\\p{N}_-]+)*\\.(?:${FILE_EXTENSIONS.join('|')})(?![\\p{L}\\p{N}])`;
 
 const PROTECTED_SOURCE = [
+  // A Templater command: `<% tp.date.now("YYYY") %>` is code.
+  '<%[^\\n]*?%>',
+  // ``a ` b``: a double-backtick span can hold a single backtick.
+  '``[^`\\n](?:[^\\n]*?[^`\\n])?``(?!`)',
   '`[^`\\n]*`',
+  // An HTML tag with attributes, whose names and values are not prose:
+  // `<span style="font-family: cursive">`. Without attributes it is an
+  // autolink's job, below.
+  '</?[A-Za-z][A-Za-z0-9-]*\\s[^<>\\n]*>',
   '\\$[^$\\n]+\\$',
+  // A block id ending a line, `^my-block`, which links name exactly. (No
+  // lookbehind for the space before it: older iOS cannot compile one.)
+  '\\^[A-Za-z0-9-]+(?=[ \\t]*$)',
   '\\[\\[[^\\]\\n]*\\]\\]',
   '\\]\\([^)\\s]*\\)',
   '<[^<>\\s]+>',
@@ -148,10 +159,46 @@ export function isMixedCase(word: string): boolean {
   return /\p{Ll}\p{Lu}/u.test(word);
 }
 
-/** A fence that opens a code block: three or more backticks or tildes. */
-const FENCE_OPEN = /^[ \t]*(`{3,}|~{3,})/;
+/** Blockquote and callout markers at the start of a line: `> > `. */
+const QUOTE_MARKERS = /^(?:[ \t]*>[ \t]?)*/;
+/**
+ * A fence that opens a code block: three or more backticks or tildes,
+ * indented, inside a quote or callout, or opening a list item.
+ */
+const FENCE_OPEN = /^(?:[ \t]*>[ \t]?)*[ \t]*(?:(?:[-*+]|\d{1,9}[.)])[ \t]+)?(`{3,}|~{3,})/;
 /** A fence that can close one: nothing after the run but spaces. */
-const FENCE_CLOSE = /^[ \t]*(`{3,}|~{3,})[ \t]*$/;
+const FENCE_CLOSE = /^(?:[ \t]*>[ \t]?)*[ \t]*(`{3,}|~{3,})[ \t]*$/;
+
+/** How many quote or callout levels a line sits in: two for `> > text`. */
+function quoteDepth(line: string): number {
+  return (QUOTE_MARKERS.exec(line)?.[0] ?? '').split('>').length - 1;
+}
+
+/** `line` with its inline code spans taken out: a run of backticks up to the next run as long. */
+function withoutInlineCode(line: string): string {
+  let out = '';
+  let i = 0;
+  while (i < line.length) {
+    if (line[i] !== '`') {
+      out += line[i++];
+      continue;
+    }
+    let run = 1;
+    while (line[i + run] === '`') run++;
+    const runs = /`+/g;
+    runs.lastIndex = i + run;
+    let close = -1;
+    for (let m = runs.exec(line); m; m = runs.exec(line)) {
+      if (m[0].length === run) {
+        close = m.index;
+        break;
+      }
+    }
+    if (close === -1) out += line.slice(i, i + run);
+    i = close === -1 ? i + run : close + run;
+  }
+  return out;
+}
 
 function countOf(haystack: string, needle: string): number {
   let count = 0;
@@ -167,31 +214,40 @@ function countOf(haystack: string, needle: string): number {
  * it belongs to such a block, delimiters included; those lines are code or
  * LaTeX, and recasing `\Sigma` to `\sigma` changes the formula.
  *
- * A fence closes only on a run of the same character at least as long as
+ * Fences count inside quotes and callouts (`> ````) and list items too. A
+ * fence closes only on a run of the same character at least as long as
  * the one that opened it, so a ```` block can quote a ``` block without the
  * inner fence switching the commands back on halfway through.
  */
 export function blockTracker(): (line: string) => boolean {
   let fence: string | null = null;
+  let fenceDepth = 0;
   let inMath = false;
 
   return (line) => {
+    // A block opened inside a quote or callout ends with it, closed or not.
+    if (fence !== null && quoteDepth(line) < fenceDepth) fence = null;
     if (fence !== null) {
       const close = FENCE_CLOSE.exec(line);
-      if (close && close[1][0] === fence[0] && close[1].length >= fence.length) fence = null;
+      // A `> ```` line in a block opened outside any quote is code, not its end.
+      if (close && close[1][0] === fence[0] && close[1].length >= fence.length && quoteDepth(line) === fenceDepth) {
+        fence = null;
+      }
       return true;
     }
     if (inMath) {
-      if (countOf(line, '$$') % 2 === 1) inMath = false;
+      if (countOf(withoutInlineCode(line), '$$') % 2 === 1) inMath = false;
       return true;
     }
     const open = FENCE_OPEN.exec(line);
-    if (open) {
+    if (open && !(open[1][0] === '`' && line.slice(open[0].length).includes('`'))) {
       fence = open[1];
+      fenceDepth = quoteDepth(line);
       return true;
     }
-    // An odd number of `$$` opens a block; `$$x$$` on one line is inline.
-    if (countOf(line, '$$') % 2 === 1) {
+    // An odd number of `$$` opens a block; `$$x$$` on one line is inline,
+    // and a `$$` inside inline code is text.
+    if (countOf(withoutInlineCode(line), '$$') % 2 === 1) {
       inMath = true;
       return true;
     }
