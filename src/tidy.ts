@@ -11,6 +11,7 @@
  */
 
 import { eachProseSegment, joinWrappedLines, removeInvisibles, replaceLigatures } from './cleanup.ts';
+import { t } from './i18n.ts';
 import { collapseBlankLines } from './lines.ts';
 import { blockTracker } from './segments.ts';
 
@@ -20,12 +21,12 @@ export type TidyStep = 'invisibles' | 'ligatures' | 'join' | 'spaces' | 'trailin
 export const TIDY_STEPS: readonly TidyStep[] = ['invisibles', 'ligatures', 'join', 'spaces', 'trailing', 'blank'];
 
 export const TIDY_STEP_LABELS: Record<TidyStep, string> = {
-  invisibles: 'Remove invisible characters',
-  ligatures: 'Replace ligatures',
-  join: 'Join wrapped lines',
-  spaces: 'Collapse multiple spaces',
-  trailing: 'Remove trailing whitespace',
-  blank: 'Remove extra blank lines',
+  invisibles: t('tidy.invisibles'),
+  ligatures: t('tidy.ligatures'),
+  join: t('tidy.join'),
+  spaces: t('tidy.spaces'),
+  trailing: t('tidy.trailing'),
+  blank: t('tidy.blank'),
 };
 
 export interface TidyOptions {

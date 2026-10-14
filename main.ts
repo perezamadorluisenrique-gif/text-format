@@ -45,6 +45,7 @@ import {
   replacementError,
   runReplacement,
 } from './src/replace.ts';
+import { t } from './src/i18n.ts';
 import { frontmatterLineCount } from './src/segments.ts';
 
 import {
@@ -122,10 +123,10 @@ function chosenSteps(settings: TextFormatSettings): TidyStep[] {
  * lowercase i under an accent.
  */
 const LOCALES: Record<string, string> = {
-  '': 'System default',
-  tr: 'Turkish',
-  az: 'Azerbaijani',
-  lt: 'Lithuanian',
+  '': t('option.systemDefault'),
+  tr: t('option.turkish'),
+  az: t('option.azerbaijani'),
+  lt: t('option.lithuanian'),
 };
 
 interface Command {
@@ -174,13 +175,13 @@ function caseOptions(settings: TextFormatSettings): CaseOptions {
 }
 
 const COMMANDS: Command[] = [
-  { id: 'upper', icon: 'case-upper', name: 'Uppercase', isCase: true, casing: true, run: (t, s) => toUpperCase(t, caseOptions(s)) },
-  { id: 'lower', icon: 'case-lower', name: 'Lowercase', isCase: true, casing: true, run: (t, s) => toLowerCase(t, caseOptions(s)) },
-  { id: 'title', icon: 'heading', name: 'Title case', isCase: true, casing: true, run: (t, s) => toTitleCase(t, caseOptions(s)) },
-  { id: 'sentence', icon: 'case-sensitive', name: 'Sentence case', isCase: true, casing: true, run: (t, s) => toSentenceCase(t, caseOptions(s)) },
+  { id: 'upper', icon: 'case-upper', name: t('command.upper'), isCase: true, casing: true, run: (t, s) => toUpperCase(t, caseOptions(s)) },
+  { id: 'lower', icon: 'case-lower', name: t('command.lower'), isCase: true, casing: true, run: (t, s) => toLowerCase(t, caseOptions(s)) },
+  { id: 'title', icon: 'heading', name: t('command.title'), isCase: true, casing: true, run: (t, s) => toTitleCase(t, caseOptions(s)) },
+  { id: 'sentence', icon: 'case-sensitive', name: t('command.sentence'), isCase: true, casing: true, run: (t, s) => toSentenceCase(t, caseOptions(s)) },
   {
     id: 'capitalize-words',
-    name: 'Capitalize each word',
+    name: t('command.capitalizeWords'),
     icon: 'whole-word',
     isCase: true,
     casing: true,
@@ -188,13 +189,13 @@ const COMMANDS: Command[] = [
   },
   {
     id: 'capitalize-sentences',
-    name: 'Capitalize sentences, leaving the rest',
+    name: t('command.capitalizeSentences'),
     icon: 'pilcrow',
     isCase: true,
     casing: true,
     run: (t, s) => capitalizeSentences(t, caseOptions(s)),
   },
-  { id: 'cycle', icon: 'repeat', name: 'Cycle case', casing: true, run: (t, s) => cycleCase(t, caseOptions(s)) },
+  { id: 'cycle', icon: 'repeat', name: t('command.cycle'), casing: true, run: (t, s) => cycleCase(t, caseOptions(s)) },
   identifier('camel-case', 'camelCase', 'code', 'camel'),
   identifier('pascal-case', 'PascalCase', 'braces', 'pascal'),
   identifier('snake-case', 'snake_case', 'underline', 'snake'),
@@ -206,66 +207,66 @@ const COMMANDS: Command[] = [
   identifier('path-case', 'path/case', 'slash', 'path'),
   identifier('capital-case', 'Capital Case', 'type', 'capital'),
   identifier('no-case', 'no case', 'text', 'no'),
-  identifier('slug', 'Slug (lowercase, no accents, hyphens)', 'link', 'slug'),
+  identifier('slug', t('command.slug'), 'link', 'slug'),
   {
     id: 'join-lines',
-    name: 'Join wrapped lines',
+    name: t('command.joinLines'),
     icon: 'merge',
     run: (t, s) => joinWrappedLines(t, { removeHyphen: s.removeHyphenOnJoin }),
   },
   {
     id: 'dehyphenate',
-    name: 'Rejoin words split across lines',
+    name: t('command.dehyphenate'),
     icon: 'spell-check',
     run: (t) => removeLineHyphenation(t),
   },
   {
     id: 'strip-invisibles',
-    name: 'Remove invisible characters',
+    name: t('command.stripInvisibles'),
     icon: 'eraser',
     run: (t) => removeInvisibles(t),
   },
   {
     id: 'replace-ligatures',
-    name: 'Replace ligatures',
+    name: t('command.replaceLigatures'),
     icon: 'case-lower',
     run: (t) => replaceLigatures(t),
   },
   {
     id: 'straighten-punctuation',
-    name: 'Straighten quotes and dashes',
+    name: t('command.straightenPunctuation'),
     icon: 'remove-formatting',
     run: (t) => straightenPunctuation(t),
   },
-  { id: 'remove-trailing-whitespace', name: 'Remove trailing whitespace', icon: 'space', lines: true,
+  { id: 'remove-trailing-whitespace', name: t('command.removeTrailingWhitespace'), icon: 'space', lines: true,
     run: (t, s) => removeTrailingWhitespace(t, { keepHardBreaks: s.keepHardBreaks }) },
-  { id: 'collapse-spaces', name: 'Collapse multiple spaces', icon: 'chevrons-left-right', lines: true,
+  { id: 'collapse-spaces', name: t('command.collapseSpaces'), icon: 'chevrons-left-right', lines: true,
     run: (t) => collapseMultipleSpaces(t) },
   {
     id: 'unlink',
-    name: 'Links to plain text',
+    name: t('command.unlink'),
     icon: 'unlink',
     run: (t, s) => linksToPlainText(t, { keepImageAltText: s.keepImageAltText }),
   },
   {
     id: 'sort-lines',
-    name: 'Sort lines A to Z',
+    name: t('command.sortLines'),
     icon: 'arrow-down-az',
     lines: true,
     run: (t, s) => sortLines(t, 'asc', s.locale === '' ? undefined : s.locale),
   },
   {
     id: 'sort-lines-desc',
-    name: 'Sort lines Z to A',
+    name: t('command.sortLinesDesc'),
     icon: 'arrow-up-za',
     lines: true,
     run: (t, s) => sortLines(t, 'desc', s.locale === '' ? undefined : s.locale),
   },
-  { id: 'dedupe-lines', name: 'Remove duplicate lines', icon: 'copy-minus', lines: true, run: (t) => removeDuplicateLines(t) },
-  { id: 'remove-blank-lines', name: 'Remove blank lines', icon: 'fold-vertical', lines: true, run: (t) => removeBlankLines(t) },
+  { id: 'dedupe-lines', name: t('command.dedupeLines'), icon: 'copy-minus', lines: true, run: (t) => removeDuplicateLines(t) },
+  { id: 'remove-blank-lines', name: t('command.removeBlankLines'), icon: 'fold-vertical', lines: true, run: (t) => removeBlankLines(t) },
   {
     id: 'collapse-blank-lines',
-    name: 'Remove extra blank lines (keep one)',
+    name: t('command.collapseBlankLines'),
     icon: 'between-horizontal-start',
     lines: true,
     run: (t) => collapseBlankLines(t),
@@ -345,7 +346,7 @@ export default class TextFormatPlugin extends Plugin {
 
     this.addCommand({
       id: 'tidy-note',
-      name: 'Tidy note',
+      name: t('command.tidyNote'),
       icon: 'sparkles',
       editorCallback: (editor: Editor) => this.tidyNote(editor),
     });
@@ -356,7 +357,7 @@ export default class TextFormatPlugin extends Plugin {
     // selection before it is applied.
     this.addCommand({
       id: 'pick-case',
-      name: 'Change case…',
+      name: t('command.pickCase'),
       icon: 'a-large-small',
       editorCallback: (editor: Editor) => {
         new CasePicker(this, editor, COMMANDS.filter((command) => command.isCase)).open();
@@ -365,11 +366,11 @@ export default class TextFormatPlugin extends Plugin {
 
     this.addCommand({
       id: 'run-saved-replacement',
-      name: 'Run a saved replacement…',
+      name: t('command.runSavedReplacement'),
       icon: 'replace-all',
       editorCallback: (editor: Editor) => {
         if (this.settings.replacements.length === 0) {
-          new Notice('No saved replacements yet. Add some in the plugin settings.');
+          new Notice(t('notice.noSavedReplacements'));
           return;
         }
         new ReplacementPicker(this, editor).open();
@@ -420,7 +421,7 @@ export default class TextFormatPlugin extends Plugin {
 
     const problem = replacementError(replacement);
     if (problem !== null) {
-      new Notice(`Replace: ${replacement.name.trim() || 'unnamed'}: ${problem}`);
+      new Notice(t('notice.replacementProblem', { name: replacement.name.trim() || t('notice.unnamed'), problem }));
       return;
     }
 
@@ -440,13 +441,13 @@ export default class TextFormatPlugin extends Plugin {
     const changes = this.plan(editor, command);
     if (changes.length === 0) {
       new Notice(this.skippedInCode
-        ? 'The selection starts or ends inside code, so it was left alone.'
-        : `No matches for "${replacement.name.trim()}".`);
+        ? t('notice.skippedInCode')
+        : t('notice.noMatches', { name: replacement.name.trim() }));
       return;
     }
 
     editor.transaction({ changes });
-    new Notice(`Made ${total} ${total === 1 ? 'replacement' : 'replacements'}.`);
+    new Notice(total === 1 ? t('notice.replacements.one') : t('notice.replacements.other', { count: total }));
   }
 
   /**
@@ -461,7 +462,7 @@ export default class TextFormatPlugin extends Plugin {
     const changes = this.plan(editor, command);
 
     if (changes.length === 0) {
-      new Notice('Nothing to format.');
+      new Notice(t('notice.nothingToFormat'));
       return;
     }
 
@@ -479,7 +480,7 @@ export default class TextFormatPlugin extends Plugin {
     const totals = new Map<TidyStep, number>();
     const command: Command = {
       id: 'tidy-note',
-      name: 'Tidy note',
+      name: t('command.tidyNote'),
       icon: 'sparkles',
       lines: true,
       run: (text, settings) => {
@@ -490,13 +491,13 @@ export default class TextFormatPlugin extends Plugin {
     };
 
     if (chosenSteps(this.settings).length === 0) {
-      new Notice('No tidy steps are turned on. Choose some in the settings.');
+      new Notice(t('notice.noTidySteps'));
       return;
     }
 
     const changes = this.plan(editor, command);
     if (changes.length === 0) {
-      new Notice('Nothing to tidy.');
+      new Notice(t('notice.nothingToTidy'));
       return;
     }
 
@@ -626,22 +627,26 @@ class TidyModal extends Modal {
 
   onOpen(): void {
     const { contentEl } = this;
-    this.setTitle('Tidy note');
+    this.setTitle(t('command.tidyNote'));
 
     const list = contentEl.createEl('ul');
     for (const { step, count } of this.report) {
-      list.createEl('li', { text: `${TIDY_STEP_LABELS[step]}: ${count} ${count === 1 ? 'line' : 'lines'}` });
+      list.createEl('li', {
+        text: count === 1
+          ? t('modal.tidy.line.one', { step: TIDY_STEP_LABELS[step] })
+          : t('modal.tidy.line.other', { step: TIDY_STEP_LABELS[step], count }),
+      });
     }
 
     new Setting(contentEl)
       .addButton((button) => button
-        .setButtonText('Tidy')
+        .setButtonText(t('modal.tidy.confirm'))
         .setCta()
         .onClick(() => {
           this.close();
           this.onConfirm();
         }))
-      .addButton((button) => button.setButtonText('Cancel').onClick(() => this.close()));
+      .addButton((button) => button.setButtonText(t('modal.tidy.cancel')).onClick(() => this.close()));
   }
 
   onClose(): void {
@@ -667,7 +672,7 @@ class CasePicker extends SuggestModal<Command> {
     this.plugin = plugin;
     this.editor = editor;
     this.commands = commands;
-    this.setPlaceholder('Pick a case for the selection');
+    this.setPlaceholder(t('modal.pickCase'));
   }
 
   getSuggestions(query: string): Command[] {
@@ -687,7 +692,7 @@ class CasePicker extends SuggestModal<Command> {
 
   private preview(command: Command): string {
     const change = this.plugin.plan(this.editor, command)[0];
-    if (change === undefined) return 'No change';
+    if (change === undefined) return t('modal.noChange');
 
     const text = change.text.split('\n').find((line) => line.trim().length > 0) ?? change.text;
     const chars = Array.from(text.trim());
@@ -704,7 +709,7 @@ class ReplacementPicker extends SuggestModal<SavedReplacement> {
     super(plugin.app);
     this.plugin = plugin;
     this.editor = editor;
-    this.setPlaceholder('Pick a saved replacement to run');
+    this.setPlaceholder(t('modal.pickReplacement'));
   }
 
   getSuggestions(query: string): SavedReplacement[] {
@@ -714,7 +719,7 @@ class ReplacementPicker extends SuggestModal<SavedReplacement> {
   }
 
   renderSuggestion(replacement: SavedReplacement, el: HTMLElement): void {
-    el.createDiv({ text: replacement.name.trim() === '' ? '(no name)' : replacement.name });
+    el.createDiv({ text: replacement.name.trim() === '' ? t('modal.noName') : replacement.name });
     el.createEl('small', {
       text: `${replacement.find} → ${replacement.replace}`,
       cls: 'text-format-preview',
@@ -732,45 +737,21 @@ class ReplacementPicker extends SuggestModal<SavedReplacement> {
  * two renderings cannot drift apart.
  */
 const SETTING_TEXT: Record<Exclude<keyof TextFormatSettings, 'replacements'>, { name: string; desc: string }> = {
-  locale: {
-    name: 'Language rules',
-    desc: 'Turkish and Azerbaijani map the dotted and dotless i differently from every other language.',
-  },
-  preserveAcronyms: {
-    name: 'Keep acronyms as they are',
-    desc: 'Leaves acronyms like NASA and PDF, and names like iPhone, macOS and GitHub, as they are. Ignored when the whole selection is already uppercase, since then every word looks like an acronym.',
-  },
-  stopWords: {
-    name: 'Words title case keeps lowercase',
-    desc: 'Comma separated. The first and last word of a title are always capitalized, whatever this list says.',
-  },
-  removeHyphenOnJoin: {
-    name: 'Drop the hyphen when joining lines',
-    desc: 'A PDF breaks a word as "trans-" and "lation". Turn this off for text where a real compound such as "well-known" is likelier than a broken word.',
-  },
-  caseTarget: {
-    name: 'With no selection, change case of',
-    desc: 'The whole line, or only the word at the caret.',
-  },
-  tidyInvisibles: { name: 'Remove invisible characters', desc: 'Zero-width characters and soft hyphens go; non-breaking spaces become spaces.' },
-  tidyLigatures: { name: 'Replace ligatures', desc: 'ﬁ and ﬂ become fi and fl.' },
-  tidyJoin: { name: 'Join wrapped lines', desc: 'Merges a paragraph hard-wrapped across lines. Off by default: it changes the line structure.' },
-  tidySpaces: { name: 'Collapse multiple spaces', desc: 'Runs of spaces between words become one. Indentation, tables and code are left alone.' },
-  tidyTrailing: { name: 'Remove trailing whitespace', desc: 'Spaces and tabs at the end of lines.' },
-  tidyBlank: { name: 'Remove extra blank lines', desc: 'Runs of blank lines become one.' },
-  keepHardBreaks: {
-    name: 'Keep hard line breaks',
-    desc: 'Two trailing spaces before a line of text are a line break in Markdown, so trailing whitespace removal keeps them. Turn this off to strip them too.',
-  },
-  confirmTidy: { name: 'Confirm before tidying', desc: 'Shows how many lines each step would change before applying.' },
-  cleanOnPaste: {
-    name: 'Tidy on paste',
-    desc: 'Runs the steps above on plain text you paste. Never inside code or frontmatter, and pastes that carry formatting are left to Obsidian. Off by default.',
-  },
-  keepImageAltText: {
-    name: 'Keep image alt text',
-    desc: 'Leaves the description behind when an image is turned into plain text, rather than removing the image entirely.',
-  },
+  locale: { name: t('setting.locale.name'), desc: t('setting.locale.desc') },
+  preserveAcronyms: { name: t('setting.preserveAcronyms.name'), desc: t('setting.preserveAcronyms.desc') },
+  stopWords: { name: t('setting.stopWords.name'), desc: t('setting.stopWords.desc') },
+  removeHyphenOnJoin: { name: t('setting.removeHyphenOnJoin.name'), desc: t('setting.removeHyphenOnJoin.desc') },
+  caseTarget: { name: t('setting.caseTarget.name'), desc: t('setting.caseTarget.desc') },
+  tidyInvisibles: { name: t('setting.tidyInvisibles.name'), desc: t('setting.tidyInvisibles.desc') },
+  tidyLigatures: { name: t('setting.tidyLigatures.name'), desc: t('setting.tidyLigatures.desc') },
+  tidyJoin: { name: t('setting.tidyJoin.name'), desc: t('setting.tidyJoin.desc') },
+  tidySpaces: { name: t('setting.tidySpaces.name'), desc: t('setting.tidySpaces.desc') },
+  tidyTrailing: { name: t('setting.tidyTrailing.name'), desc: t('setting.tidyTrailing.desc') },
+  tidyBlank: { name: t('setting.tidyBlank.name'), desc: t('setting.tidyBlank.desc') },
+  keepHardBreaks: { name: t('setting.keepHardBreaks.name'), desc: t('setting.keepHardBreaks.desc') },
+  confirmTidy: { name: t('setting.confirmTidy.name'), desc: t('setting.confirmTidy.desc') },
+  cleanOnPaste: { name: t('setting.cleanOnPaste.name'), desc: t('setting.cleanOnPaste.desc') },
+  keepImageAltText: { name: t('setting.keepImageAltText.name'), desc: t('setting.keepImageAltText.desc') },
 };
 
 /** The Tidy settings that are plain on/off switches, in the order shown. */
@@ -779,8 +760,7 @@ const TIDY_TOGGLES = [
   'keepHardBreaks', 'confirmTidy', 'cleanOnPaste',
 ] as const;
 
-const REPLACEMENTS_DESC =
-  'Each replacement becomes a command, "Replace: <name>", that you can give a hotkey, and is listed in "Run a saved replacement…". It works on the selection, or on the whole note when nothing is selected, and never touches code or front matter.';
+const REPLACEMENTS_DESC = t('replacements.desc');
 
 class TextFormatSettingTab extends PluginSettingTab {
   private plugin: TextFormatPlugin;
@@ -801,7 +781,7 @@ class TextFormatSettingTab extends PluginSettingTab {
     return [
       {
         type: 'group',
-        heading: 'Case',
+        heading: t('heading.case'),
         items: [
           {
             ...SETTING_TEXT.locale,
@@ -825,7 +805,7 @@ class TextFormatSettingTab extends PluginSettingTab {
             control: {
               type: 'dropdown',
               key: 'caseTarget',
-              options: { line: 'Whole line', word: 'Word at the caret' },
+              options: { line: t('option.wholeLine'), word: t('option.wordAtCaret') },
               defaultValue: DEFAULT_SETTINGS.caseTarget,
             },
           },
@@ -844,7 +824,7 @@ class TextFormatSettingTab extends PluginSettingTab {
       },
       {
         type: 'group',
-        heading: 'Cleanup',
+        heading: t('heading.cleanup'),
         items: [
           {
             ...SETTING_TEXT.removeHyphenOnJoin,
@@ -866,7 +846,7 @@ class TextFormatSettingTab extends PluginSettingTab {
       },
       {
         type: 'group',
-        heading: 'Tidy note',
+        heading: t('heading.tidy'),
         items: TIDY_TOGGLES.map((key) => ({
           ...SETTING_TEXT[key],
           control: { type: 'toggle', key, defaultValue: DEFAULT_SETTINGS[key] },
@@ -874,10 +854,10 @@ class TextFormatSettingTab extends PluginSettingTab {
       },
       {
         type: 'group',
-        heading: 'Saved replacements',
+        heading: t('heading.replacements'),
         items: [
           {
-            name: 'Your find-and-replace commands',
+            name: t('replacements.name'),
             desc: REPLACEMENTS_DESC,
             aliases: ['find', 'replace', 'regex', 'regular expression', 'substitute'],
             // The editor draws its own rows inside this one.
@@ -911,7 +891,7 @@ class TextFormatSettingTab extends PluginSettingTab {
     const settings = this.plugin.settings;
     containerEl.empty();
 
-    new Setting(containerEl).setName('Case').setHeading();
+    new Setting(containerEl).setName(t('heading.case')).setHeading();
 
     new Setting(containerEl)
       .setName(SETTING_TEXT.locale.name)
@@ -939,8 +919,8 @@ class TextFormatSettingTab extends PluginSettingTab {
       .setName(SETTING_TEXT.caseTarget.name)
       .setDesc(SETTING_TEXT.caseTarget.desc)
       .addDropdown((dropdown) => dropdown
-        .addOption('line', 'Whole line')
-        .addOption('word', 'Word at the caret')
+        .addOption('line', t('option.wholeLine'))
+        .addOption('word', t('option.wordAtCaret'))
         .setValue(settings.caseTarget)
         .onChange(async (value) => {
           settings.caseTarget = value === 'word' ? 'word' : 'line';
@@ -962,7 +942,7 @@ class TextFormatSettingTab extends PluginSettingTab {
           });
       });
 
-    new Setting(containerEl).setName('Cleanup').setHeading();
+    new Setting(containerEl).setName(t('heading.cleanup')).setHeading();
 
     new Setting(containerEl)
       .setName(SETTING_TEXT.removeHyphenOnJoin.name)
@@ -984,7 +964,7 @@ class TextFormatSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         }));
 
-    new Setting(containerEl).setName('Tidy note').setHeading();
+    new Setting(containerEl).setName(t('heading.tidy')).setHeading();
 
     for (const key of TIDY_TOGGLES) {
       new Setting(containerEl)
@@ -998,7 +978,7 @@ class TextFormatSettingTab extends PluginSettingTab {
           }));
     }
 
-    new Setting(containerEl).setName('Saved replacements').setHeading();
+    new Setting(containerEl).setName(t('heading.replacements')).setHeading();
     this.renderReplacements(containerEl.createDiv());
   }
 
@@ -1025,10 +1005,10 @@ class TextFormatSettingTab extends PluginSettingTab {
       };
 
       new Setting(card)
-        .setName('Name')
-        .setDesc('The command is called "Replace: <name>". Without a name there is no command.')
+        .setName(t('replacements.nameField'))
+        .setDesc(t('replacements.nameDesc'))
         .addText((text) => text
-          .setPlaceholder('Fix dashes')
+          .setPlaceholder(t('replacements.namePlaceholder'))
           .setValue(replacement.name)
           .onChange(async (value) => {
             replacement.name = value;
@@ -1037,7 +1017,7 @@ class TextFormatSettingTab extends PluginSettingTab {
           }))
         .addExtraButton((button) => button
           .setIcon('trash-2')
-          .then((b) => b.extraSettingsEl.setAttribute('aria-label', 'Delete this replacement'))
+          .then((b) => b.extraSettingsEl.setAttribute('aria-label', t('replacements.delete')))
           .onClick(async () => {
             plugin.settings.replacements = plugin.settings.replacements.filter((r) => r.id !== replacement.id);
             await plugin.saveSettings();
@@ -1046,7 +1026,7 @@ class TextFormatSettingTab extends PluginSettingTab {
           }));
 
       new Setting(card)
-        .setName('Find')
+        .setName(t('replacements.find'))
         .addText((text) => text
           .setValue(replacement.find)
           .onChange(async (value) => {
@@ -1056,8 +1036,8 @@ class TextFormatSettingTab extends PluginSettingTab {
           }));
 
       new Setting(card)
-        .setName('Replace with')
-        .setDesc('Leave empty to delete the matches. With regular expression on, $1 is the first group and \\n a line break.')
+        .setName(t('replacements.replaceWith'))
+        .setDesc(t('replacements.replaceWithDesc'))
         .addText((text) => text
           .setValue(replacement.replace)
           .onChange(async (value) => {
@@ -1066,7 +1046,7 @@ class TextFormatSettingTab extends PluginSettingTab {
           }));
 
       new Setting(card)
-        .setName('Regular expression')
+        .setName(t('replacements.regex'))
         .addToggle((toggle) => toggle
           .setValue(replacement.regex)
           .onChange(async (value) => {
@@ -1076,7 +1056,7 @@ class TextFormatSettingTab extends PluginSettingTab {
           }));
 
       new Setting(card)
-        .setName('Match case')
+        .setName(t('replacements.matchCase'))
         .addToggle((toggle) => toggle
           .setValue(replacement.matchCase)
           .onChange(async (value) => {
@@ -1089,7 +1069,7 @@ class TextFormatSettingTab extends PluginSettingTab {
 
     new Setting(host)
       .addButton((button) => button
-        .setButtonText('Add a replacement')
+        .setButtonText(t('replacements.add'))
         .setCta()
         .onClick(async () => {
           plugin.settings.replacements.push({
