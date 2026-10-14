@@ -229,3 +229,31 @@ test('a word that merely contains v and digits is not a version', () => {
   assert.equal(toTitleCase('the av1.2 codec'), 'The Av1.2 Codec');
   assert.equal(toTitleCase('use v1.2x here'), 'Use V1.2x Here');
 });
+
+test('code in a callout or quote keeps its case', () => {
+  assert.equal(
+    toUpperCase('> [!tip] note\n> ```css\n> body { color: red; }\n> ```\n> after'),
+    '> [!TIP] NOTE\n> ```css\n> body { color: red; }\n> ```\n> AFTER',
+  );
+  // A block opened in a callout ends with it.
+  assert.equal(toUpperCase('> ```\n> code\n\nprose'), '> ```\n> code\n\nPROSE');
+});
+
+test('a $$ inside inline code does not open display maths', () => {
+  assert.equal(toUpperCase('Wrap it in (`$$`).\n\nsome text'), 'WRAP IT IN (`$$`).\n\nSOME TEXT');
+  assert.equal(toUpperCase('``a ` b`` and `$$`\n\nsome text'), '``a ` b`` AND `$$`\n\nSOME TEXT');
+});
+
+test('HTML attributes, Templater commands, double-backtick code and block ids keep their case', () => {
+  assert.equal(
+    toUpperCase('<span style="font-family: cursive">text</span>'),
+    '<span style="font-family: cursive">TEXT</span>',
+  );
+  assert.equal(toTitleCase('due <% tp.date.now("YYYY-MM-DD") %> today'), 'Due <% tp.date.now("YYYY-MM-DD") %> Today');
+  assert.equal(toUpperCase('use ``a ` b`` here'), 'USE ``a ` b`` HERE');
+  assert.equal(toUpperCase('a quoted paragraph ^my-block'), 'A QUOTED PARAGRAPH ^my-block');
+});
+
+test('a quoted fence inside a code block does not end it', () => {
+  assert.equal(toUpperCase('```md\n> ```\ncode\n```\ntext'), '```md\n> ```\ncode\n```\nTEXT');
+});
