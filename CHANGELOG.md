@@ -4,6 +4,13 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## 0.7.1
+
+- Code blocks inside callouts and quotes, Templater commands, HTML attributes, double-backtick code and block ids are no longer recased, joined or tidied.
+- A `$$` written in inline code no longer stops the commands from working on the rest of the note.
+- “Remove invisible characters” keeps the zero-width joiners that Persian, Hindi and other scripts and emoji need, and no longer changes link targets.
+- “Tidy note” gives its final result in one run, and “Remove duplicate lines” and “Remove blank lines” leave display maths alone.
+
 ## 0.7.0
 
 - Interface available in 8 more languages (Simplified Chinese, Japanese, Korean, Spanish, German, French, Brazilian Portuguese and Russian), following Obsidian's language setting.
