@@ -4,6 +4,10 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## 0.7.2
+
+- Settings: a link to more plugins, the optional Pro versions and template vaults (opens a web page when clicked).
+
 ## 0.7.1
 
 - Code blocks inside callouts and quotes, Templater commands, HTML attributes, double-backtick code and block ids are no longer recased, joined or tidied.

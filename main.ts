@@ -46,6 +46,7 @@ import {
   runReplacement,
 } from './src/replace.ts';
 import { t } from './src/i18n.ts';
+import { moreText, openMore } from './src/more-link.ts';
 import { frontmatterLineCount } from './src/segments.ts';
 
 import {
@@ -867,6 +868,7 @@ class TextFormatSettingTab extends PluginSettingTab {
           },
         ],
       },
+      { name: moreText().name, desc: moreText().desc, action: () => openMore() },
     ];
   }
 
@@ -980,6 +982,11 @@ class TextFormatSettingTab extends PluginSettingTab {
 
     new Setting(containerEl).setName(t('heading.replacements')).setHeading();
     this.renderReplacements(containerEl.createDiv());
+
+    new Setting(containerEl)
+      .setName(moreText().name)
+      .setDesc(moreText().desc)
+      .addButton((b) => b.setButtonText(moreText().button).onClick(() => openMore()));
   }
 
   /**
