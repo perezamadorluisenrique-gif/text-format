@@ -272,7 +272,8 @@ document.
 | [Inline TOC](https://obsidian.md/plugins?id=inline-toc) | Show a live table of contents inside any note with a toc code block, or insert a plain Markdown one. | [inline-toc](https://github.com/perezamadorluisenrique-gif/inline-toc) |
 
 All of them are in the community directory: Settings -> Community plugins ->
-Browse, then search for the name.
+Browse, then search for the name. Demos and install links for every one:
+[the catalog](https://perezamadorluisenrique-gif.github.io/catalog/).
 
 ### Pro and templates
 
