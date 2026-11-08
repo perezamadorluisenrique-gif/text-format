@@ -46,7 +46,6 @@ import {
   runReplacement,
 } from './src/replace.ts';
 import { t } from './src/i18n.ts';
-import { moreText, openMore } from './src/more-link.ts';
 import { frontmatterLineCount } from './src/segments.ts';
 
 import {
@@ -60,6 +59,7 @@ import {
   tidy,
   wordRangeAt,
 } from './src/tidy.ts';
+import { moreDefinitions, renderMore } from './src/more-link.ts';
 
 interface TextFormatSettings {
   /** A BCP 47 tag, or '' for the rules of the running system. */
@@ -868,7 +868,7 @@ class TextFormatSettingTab extends PluginSettingTab {
           },
         ],
       },
-      { name: moreText().name, desc: moreText().desc, action: () => openMore() },
+      ...(moreDefinitions() as SettingDefinitionItem[]),
     ];
   }
 
@@ -983,10 +983,7 @@ class TextFormatSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(t('heading.replacements')).setHeading();
     this.renderReplacements(containerEl.createDiv());
 
-    new Setting(containerEl)
-      .setName(moreText().name)
-      .setDesc(moreText().desc)
-      .addButton((b) => b.setButtonText(moreText().button).onClick(() => openMore()));
+    renderMore(this.containerEl, (el) => new Setting(el));
   }
 
   /**
