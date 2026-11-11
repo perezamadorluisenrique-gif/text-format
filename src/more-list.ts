@@ -2,7 +2,7 @@
 import type { MorePick } from './more-link.ts';
 
 export const PICKS: readonly MorePick[] = [
+	{ id: "book-studio", name: "Book Studio", desc: "Turn notes into a print-ready PDF and EPUB." },
 	{ id: "typography-as-you-type", name: "Typography as You Type", desc: "Curly quotes, dashes and ellipses as you type." },
 	{ id: "section-numbering", name: "Section Numbering", desc: "Number headings as an outline, links stay intact." },
-	{ id: "list-item-callouts", name: "List Item Callouts", desc: "Colour a list item as a callout." },
 ];
