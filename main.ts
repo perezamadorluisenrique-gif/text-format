@@ -3,13 +3,17 @@ import {
   type EditorChange,
   type EditorPosition,
   type EditorSelection,
+  type Menu,
+  type MenuItem,
   Modal,
   Notice,
+  Platform,
   Plugin,
   PluginSettingTab,
   Setting,
   type SettingDefinitionItem,
   SuggestModal,
+  TFile,
 } from 'obsidian';
 
 import {
@@ -60,6 +64,8 @@ import {
   wordRangeAt,
 } from './src/tidy.ts';
 import { moreDefinitions, renderMore } from './src/more-link.ts';
+import { SEPARATOR, canUseSubmenus, editorMenuModel, type MenuGroup } from './src/menu.ts';
+import { NAMING_CASES, type NameProblem, type RenamePlan, planRename } from './src/rename.ts';
 
 interface TextFormatSettings {
   /** A BCP 47 tag, or '' for the rules of the running system. */
@@ -83,6 +89,8 @@ interface TextFormatSettings {
   cleanOnPaste: boolean;
   /** The user's own find-and-replace commands. None ship by default. */
   replacements: SavedReplacement[];
+  /** "Text case" and "Cleanup" in the editor's right-click (long-press) menu. */
+  editorMenu: boolean;
 }
 
 /** The setting behind each Tidy step. */
@@ -112,6 +120,7 @@ const DEFAULT_SETTINGS: TextFormatSettings = {
   confirmTidy: true,
   cleanOnPaste: false,
   replacements: [],
+  editorMenu: true,
 };
 
 function chosenSteps(settings: TextFormatSettings): TidyStep[] {
@@ -361,7 +370,7 @@ export default class TextFormatPlugin extends Plugin {
       name: t('command.pickCase'),
       icon: 'a-large-small',
       editorCallback: (editor: Editor) => {
-        new CasePicker(this, editor, COMMANDS.filter((command) => command.isCase)).open();
+        this.openCasePicker(editor);
       },
     });
 
@@ -378,9 +387,121 @@ export default class TextFormatPlugin extends Plugin {
       },
     });
 
+    // Before the saved replacements: a deleted one stays registered but hidden,
+    // and the commands after it would shift on the mobile toolbar.
+    this.registerMenus();
     this.syncReplacementCommands();
 
     this.addSettingTab(new TextFormatSettingTab(this));
+  }
+
+  /**
+   * The editor menu ("Text case" and "Cleanup") and "Rename with case…" in a
+   * file's menu, plus the same rename as a command for the active note.
+   */
+  private registerMenus(): void {
+    this.registerEvent(this.app.workspace.on('editor-menu', (menu, editor) => this.fillEditorMenu(menu, editor)));
+
+    this.registerEvent(this.app.workspace.on('file-menu', (menu, file) => {
+      if (!(file instanceof TFile)) return;
+      menu.addItem((item) => item
+        .setTitle(t('menu.renameWithCase'))
+        .setIcon('pencil')
+        .setSection('action')
+        .onClick(() => new RenamePicker(this, file).open()));
+    }));
+
+    this.addCommand({
+      id: 'rename-with-case',
+      name: t('command.renameWithCase'),
+      icon: 'pencil',
+      checkCallback: (checking: boolean) => {
+        const file = this.app.workspace.getActiveFile();
+        if (file === null) return false;
+        if (!checking) new RenamePicker(this, file).open();
+        return true;
+      },
+    });
+  }
+
+  /**
+   * Two items, each a submenu on desktop. Obsidian's mobile menu is a sheet
+   * without real submenus, so there each item opens a searchable list instead.
+   */
+  private fillEditorMenu(menu: Menu, editor: Editor): void {
+    if (!this.settings.editorMenu) return;
+    const hasSelection = editor.somethingSelected();
+
+    for (const id of ['case', 'cleanup'] as const) {
+      menu.addItem((item) => {
+        const submenus = canUseSubmenus(Platform.isMobile, item);
+        const group = editorMenuModel({ enabled: true, hasSelection, submenus })?.groups.find((g) => g.id === id);
+        if (group === undefined) return;
+        item.setIcon(id === 'case' ? 'case-sensitive' : 'sparkles').setSection('selection');
+
+        if (submenus) {
+          item.setTitle(id === 'case' ? t('menu.textCase') : t('menu.cleanup'));
+          this.fillSubmenu((item as MenuItem & { setSubmenu(): Menu }).setSubmenu(), group, editor);
+        } else {
+          item.setTitle(id === 'case' ? t('menu.textCasePicker') : t('menu.cleanupPicker'));
+          item.onClick(() => {
+            if (id === 'case') this.openCasePicker(editor);
+            else new ActionPicker(this, editor, group.entries).open();
+          });
+        }
+      });
+    }
+  }
+
+  private fillSubmenu(submenu: Menu, group: MenuGroup, editor: Editor): void {
+    for (const entry of group.entries) {
+      if (entry === SEPARATOR) {
+        submenu.addSeparator();
+        continue;
+      }
+      submenu.addItem((item) => item
+        .setTitle(entryTitle(entry))
+        .setIcon(entryIcon(entry))
+        .onClick(() => this.runEntry(editor, entry)));
+    }
+  }
+
+  /** Runs a menu entry: a command from the table, Tidy note, or the case picker. */
+  runEntry(editor: Editor, entry: string): void {
+    if (entry === 'tidy-note') this.tidyNote(editor);
+    else if (entry === 'pick-case') this.openCasePicker(editor);
+    else {
+      const command = COMMANDS.find((c) => c.id === entry);
+      if (command !== undefined) this.apply(editor, command);
+    }
+  }
+
+  private openCasePicker(editor: Editor): void {
+    new CasePicker(this, editor, COMMANDS.filter((command) => command.isCase)).open();
+  }
+
+  /** What renaming `file` with one of the naming cases would do. */
+  planCaseRename(file: TFile, caseId: string): RenamePlan | null {
+    const command = COMMANDS.find((c) => c.id === caseId);
+    if (command === undefined) return null;
+    const existing = this.app.vault.getAllLoadedFiles().map((f) => f.path);
+    return planRename(file.path, (name) => command.run(name, this.settings), existing);
+  }
+
+  /** Renames through Obsidian, so links to the note follow the user's "update links" preference. */
+  async renameWithCase(file: TFile, caseId: string): Promise<void> {
+    const plan = this.planCaseRename(file, caseId);
+    if (plan === null) return;
+    if (!plan.ok) {
+      new Notice(renameReason(plan));
+      return;
+    }
+    try {
+      await this.app.fileManager.renameFile(file, plan.path);
+      new Notice(t('notice.renamed', { name: plan.name }));
+    } catch (error) {
+      new Notice(t('notice.renameFailed', { problem: error instanceof Error ? error.message : String(error) }));
+    }
   }
 
   /**
@@ -701,6 +822,102 @@ class CasePicker extends SuggestModal<Command> {
   }
 }
 
+/** A menu entry's label: the command's name, or Tidy note or the case picker. */
+function entryTitle(entry: string): string {
+  if (entry === 'tidy-note') return t('command.tidyNote');
+  if (entry === 'pick-case') return t('command.pickCase');
+  return COMMANDS.find((c) => c.id === entry)?.name ?? entry;
+}
+
+function entryIcon(entry: string): string {
+  if (entry === 'tidy-note') return 'sparkles';
+  if (entry === 'pick-case') return 'a-large-small';
+  return COMMANDS.find((c) => c.id === entry)?.icon ?? 'text';
+}
+
+/** The mobile stand-in for a submenu: the same entries as a searchable list. */
+class ActionPicker extends SuggestModal<string> {
+  private plugin: TextFormatPlugin;
+  private editor: Editor;
+  private entries: string[];
+
+  constructor(plugin: TextFormatPlugin, editor: Editor, entries: string[]) {
+    super(plugin.app);
+    this.plugin = plugin;
+    this.editor = editor;
+    this.entries = entries.filter((entry) => entry !== SEPARATOR);
+    this.setPlaceholder(t('modal.pickCleanup'));
+  }
+
+  getSuggestions(query: string): string[] {
+    const wanted = query.toLowerCase().trim();
+    return this.entries.filter((entry) => entryTitle(entry).toLowerCase().includes(wanted));
+  }
+
+  renderSuggestion(entry: string, el: HTMLElement): void {
+    el.createDiv({ text: entryTitle(entry) });
+  }
+
+  onChooseSuggestion(entry: string): void {
+    this.plugin.runEntry(this.editor, entry);
+  }
+}
+
+function problemText(problem: NameProblem): string {
+  switch (problem.kind) {
+    case 'empty': return t('rename.empty');
+    case 'forbidden': return t('rename.forbidden', { chars: problem.chars });
+    case 'control': return t('rename.control');
+    case 'reserved': return t('rename.reserved');
+    case 'trailing': return t('rename.trailing');
+    case 'leadingDot': return t('rename.leadingDot');
+    case 'tooLong': return t('rename.tooLong');
+  }
+}
+
+/** Why a rename cannot be made, for a picker row or a notice. */
+function renameReason(plan: RenamePlan): string {
+  if (plan.ok) return '';
+  if (plan.reason === 'invalid') return problemText(plan.problem);
+  return plan.reason === 'unchanged' ? t('rename.unchanged') : t('rename.taken', { name: plan.name });
+}
+
+/**
+ * The naming cases for one file, each row showing the new name, or why that
+ * case cannot be used (the name is taken, or not allowed on Windows or
+ * Android), before anything is renamed.
+ */
+class RenamePicker extends SuggestModal<string> {
+  private plugin: TextFormatPlugin;
+  private file: TFile;
+
+  constructor(plugin: TextFormatPlugin, file: TFile) {
+    super(plugin.app);
+    this.plugin = plugin;
+    this.file = file;
+    this.setPlaceholder(t('modal.renameWithCase', { name: file.name }));
+  }
+
+  getSuggestions(query: string): string[] {
+    const wanted = query.toLowerCase().replace(/[\s_.-]+/g, '');
+    return NAMING_CASES.filter((id) => entryTitle(id).toLowerCase().replace(/[\s_.-]+/g, '').includes(wanted));
+  }
+
+  renderSuggestion(caseId: string, el: HTMLElement): void {
+    el.createDiv({ text: entryTitle(caseId) });
+    const plan = this.plugin.planCaseRename(this.file, caseId);
+    if (plan === null) return;
+    el.createEl('small', {
+      text: plan.ok ? plan.name : renameReason(plan),
+      cls: plan.ok ? 'text-format-preview' : 'text-format-preview text-format-blocked',
+    });
+  }
+
+  onChooseSuggestion(caseId: string): void {
+    void this.plugin.renameWithCase(this.file, caseId);
+  }
+}
+
 /** Every saved replacement in one list, for one hotkey that reaches all of them. */
 class ReplacementPicker extends SuggestModal<SavedReplacement> {
   private plugin: TextFormatPlugin;
@@ -753,6 +970,7 @@ const SETTING_TEXT: Record<Exclude<keyof TextFormatSettings, 'replacements'>, { 
   confirmTidy: { name: t('setting.confirmTidy.name'), desc: t('setting.confirmTidy.desc') },
   cleanOnPaste: { name: t('setting.cleanOnPaste.name'), desc: t('setting.cleanOnPaste.desc') },
   keepImageAltText: { name: t('setting.keepImageAltText.name'), desc: t('setting.keepImageAltText.desc') },
+  editorMenu: { name: t('setting.editorMenu.name'), desc: t('setting.editorMenu.desc') },
 };
 
 /** The Tidy settings that are plain on/off switches, in the order shown. */
@@ -865,6 +1083,16 @@ class TextFormatSettingTab extends PluginSettingTab {
             render: (setting) => {
               this.renderReplacements(setting.settingEl);
             },
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: t('heading.menus'),
+        items: [
+          {
+            ...SETTING_TEXT.editorMenu,
+            control: { type: 'toggle', key: 'editorMenu', defaultValue: DEFAULT_SETTINGS.editorMenu },
           },
         ],
       },
@@ -982,6 +1210,17 @@ class TextFormatSettingTab extends PluginSettingTab {
 
     new Setting(containerEl).setName(t('heading.replacements')).setHeading();
     this.renderReplacements(containerEl.createDiv());
+
+    new Setting(containerEl).setName(t('heading.menus')).setHeading();
+    new Setting(containerEl)
+      .setName(SETTING_TEXT.editorMenu.name)
+      .setDesc(SETTING_TEXT.editorMenu.desc)
+      .addToggle((toggle) => toggle
+        .setValue(settings.editorMenu)
+        .onChange(async (value) => {
+          settings.editorMenu = value;
+          await this.plugin.saveSettings();
+        }));
 
     renderMore(this.containerEl, (el) => new Setting(el));
   }

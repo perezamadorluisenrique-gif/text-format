@@ -4,9 +4,11 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
-## Unreleased
+## 0.8.0
 
 - Settings: the first plugin suggested under "More plugins" is now Book Studio (a link you open yourself; nothing is shown or requested otherwise).
+- Right-click (long-press on mobile) in a note for Text case and Cleanup submenus; on mobile each opens a short list. Turn it off with "Show in the editor menu".
+- New "Rename with case…" in a file's menu, and the command "Rename note with case…": pick a case, see the new name, and links to the note follow. Names that are taken or not valid on Windows or Android are refused.
 
 ## 0.7.2
 
