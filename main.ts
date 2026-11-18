@@ -60,8 +60,11 @@ import {
   wordRangeAt,
 } from './src/tidy.ts';
 import { moreDefinitions, renderMore } from './src/more-link.ts';
+import { HINT_DEFAULTS, cleanHintSettings, hintDue, hintUrl, hintsOff, markHintShown, renderHint } from './src/pro-hint.ts';
+import type { HintSettings } from './src/pro-hint.ts';
+import { isLargeCleanup, sizeOf } from './src/large-cleanup.ts';
 
-interface TextFormatSettings {
+interface TextFormatSettings extends HintSettings {
   /** A BCP 47 tag, or '' for the rules of the running system. */
   locale: string;
   preserveAcronyms: boolean;
@@ -112,6 +115,8 @@ const DEFAULT_SETTINGS: TextFormatSettings = {
   confirmTidy: true,
   cleanOnPaste: false,
   replacements: [],
+  ...HINT_DEFAULTS,
+  proHintShown: {},
 };
 
 function chosenSteps(settings: TextFormatSettings): TidyStep[] {
@@ -507,8 +512,26 @@ export default class TextFormatPlugin extends Plugin {
       .map((step) => ({ step, count: totals.get(step) ?? 0 }));
     const apply = (): void => editor.transaction({ changes });
 
-    if (this.settings.confirmTidy) new TidyModal(this, report, apply).open();
+    if (this.settings.confirmTidy) {
+      // A big cleanup is where a tip about cleaning many notes at once is relevant; decided once, as the dialog opens.
+      const large = isLargeCleanup(sizeOf(changes.map((change) => editor.getRange(change.from, change.to ?? change.from))));
+      const tip = large && this.takeProTip();
+      new TidyModal(this, report, apply, tip).open();
+    }
     else apply();
+  }
+
+  /** True when the dialog may show its Pro tip now; if so, remembers that it did (at most once every 14 days). */
+  takeProTip(): boolean {
+    if (!hintDue(this.settings, 'tc-cleanup')) return false;
+    Object.assign(this.settings, markHintShown(this.settings, 'tc-cleanup'));
+    void this.saveSettings();
+    return true;
+  }
+
+  async proTipsOff(): Promise<void> {
+    Object.assign(this.settings, hintsOff(this.settings));
+    await this.saveSettings();
   }
 
   private tidyOptions(settings: TextFormatSettings) {
@@ -606,7 +629,7 @@ export default class TextFormatPlugin extends Plugin {
     // some earlier version of this plugin, so it is read as `unknown` and
     // narrowed before it is merged over the defaults.
     const stored = (await this.loadData()) as Partial<TextFormatSettings> | null;
-    this.settings = { ...DEFAULT_SETTINGS, ...stored };
+    this.settings = { ...DEFAULT_SETTINGS, ...stored, ...cleanHintSettings(stored) };
     this.settings.replacements = normalizeReplacements(stored?.replacements);
   }
 
@@ -619,11 +642,15 @@ export default class TextFormatPlugin extends Plugin {
 class TidyModal extends Modal {
   private report: TidyResult['report'];
   private onConfirm: () => void;
+  private plugin: TextFormatPlugin;
+  private tip: boolean;
 
-  constructor(plugin: TextFormatPlugin, report: TidyResult['report'], onConfirm: () => void) {
+  constructor(plugin: TextFormatPlugin, report: TidyResult['report'], onConfirm: () => void, tip = false) {
     super(plugin.app);
+    this.plugin = plugin;
     this.report = report;
     this.onConfirm = onConfirm;
+    this.tip = tip;
   }
 
   onOpen(): void {
@@ -648,6 +675,16 @@ class TidyModal extends Modal {
           this.onConfirm();
         }))
       .addButton((button) => button.setButtonText(t('modal.tidy.cancel')).onClick(() => this.close()));
+
+    // Decided when the dialog was created, so redrawing it never adds a second one.
+    if (this.tip && this.plugin.settings.proHints) {
+      renderHint(
+        contentEl,
+        { line: t('proHint.cleanup'), more: t('proHint.more'), off: t('proHint.off') },
+        hintUrl('text-case', 'tc-cleanup'),
+        () => this.plugin.proTipsOff(),
+      );
+    }
   }
 
   onClose(): void {
@@ -737,7 +774,7 @@ class ReplacementPicker extends SuggestModal<SavedReplacement> {
  * definitions below and the `display()` fallback both read from here, so the
  * two renderings cannot drift apart.
  */
-const SETTING_TEXT: Record<Exclude<keyof TextFormatSettings, 'replacements'>, { name: string; desc: string }> = {
+const SETTING_TEXT: Record<Exclude<keyof TextFormatSettings, 'replacements' | 'proHintShown'>, { name: string; desc: string }> = {
   locale: { name: t('setting.locale.name'), desc: t('setting.locale.desc') },
   preserveAcronyms: { name: t('setting.preserveAcronyms.name'), desc: t('setting.preserveAcronyms.desc') },
   stopWords: { name: t('setting.stopWords.name'), desc: t('setting.stopWords.desc') },
@@ -753,6 +790,7 @@ const SETTING_TEXT: Record<Exclude<keyof TextFormatSettings, 'replacements'>, { 
   confirmTidy: { name: t('setting.confirmTidy.name'), desc: t('setting.confirmTidy.desc') },
   cleanOnPaste: { name: t('setting.cleanOnPaste.name'), desc: t('setting.cleanOnPaste.desc') },
   keepImageAltText: { name: t('setting.keepImageAltText.name'), desc: t('setting.keepImageAltText.desc') },
+  proHints: { name: t('setting.proHints.name'), desc: t('setting.proHints.desc') },
 };
 
 /** The Tidy settings that are plain on/off switches, in the order shown. */
@@ -868,6 +906,10 @@ class TextFormatSettingTab extends PluginSettingTab {
           },
         ],
       },
+      {
+        ...SETTING_TEXT.proHints,
+        control: { type: 'toggle', key: 'proHints', defaultValue: DEFAULT_SETTINGS.proHints },
+      },
       ...(moreDefinitions() as SettingDefinitionItem[]),
     ];
   }
@@ -982,6 +1024,16 @@ class TextFormatSettingTab extends PluginSettingTab {
 
     new Setting(containerEl).setName(t('heading.replacements')).setHeading();
     this.renderReplacements(containerEl.createDiv());
+
+    new Setting(containerEl)
+      .setName(SETTING_TEXT.proHints.name)
+      .setDesc(SETTING_TEXT.proHints.desc)
+      .addToggle((toggle) => toggle
+        .setValue(settings.proHints)
+        .onChange(async (value) => {
+          settings.proHints = value;
+          await this.plugin.saveSettings();
+        }));
 
     renderMore(this.containerEl, (el) => new Setting(el));
   }

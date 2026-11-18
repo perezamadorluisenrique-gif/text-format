@@ -67,6 +67,11 @@ const es: Messages = {
   'heading.cleanup': 'Limpieza',
   'heading.tidy': 'Ordenar nota',
   'heading.replacements': 'Reemplazos guardados',
+  'setting.proHints.name': 'Mostrar consejos de Pro',
+  'setting.proHints.desc': 'De vez en cuando, una línea sobre Text Case Pro (de pago) justo donde ayudaría, como mucho una vez cada 14 días en cada sitio. Texto fijo: sin red y sin seguimiento.',
+  'proHint.cleanup': '¿Limpias notas como esta una por una? Text Case Pro limpia carpetas enteras o toda la bóveda con recetas guardadas, y busca y reemplaza en toda la bóveda.',
+  'proHint.more': 'Más información',
+  'proHint.off': 'No volver a mostrar',
 
   // Settings: dropdown options
   'option.systemDefault': 'Predeterminado del sistema',

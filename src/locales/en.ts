@@ -70,6 +70,11 @@ const en = {
   'heading.cleanup': 'Cleanup',
   'heading.tidy': 'Tidy note',
   'heading.replacements': 'Saved replacements',
+  'setting.proHints.name': 'Show Pro tips',
+  'setting.proHints.desc': 'Now and then, one line about Text Case Pro (paid) right where it would help, at most once every 14 days per place. Fixed text: no network, no tracking.',
+  'proHint.cleanup': 'Cleaning notes like this one by one? Text Case Pro cleans whole folders or the vault with saved recipes, and finds and replaces across the vault.',
+  'proHint.more': 'Learn more',
+  'proHint.off': "Don't show again",
 
   // Settings: dropdown options
   'option.systemDefault': 'System default',

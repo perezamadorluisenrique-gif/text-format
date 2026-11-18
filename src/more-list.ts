@@ -6,3 +6,6 @@ export const PICKS: readonly MorePick[] = [
 	{ id: "typography-as-you-type", name: "Typography as You Type", desc: "Curly quotes, dashes and ellipses as you type." },
 	{ id: "section-numbering", name: "Section Numbering", desc: "Number headings as an outline, links stay intact." },
 ];
+
+/** The "Pro and templates" row of the settings block, or null for none. */
+export const PRO_PAGE: string | null = 'https://perezamadorluisenrique-gif.github.io/pro/?ref=more-text-format';

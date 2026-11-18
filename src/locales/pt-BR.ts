@@ -67,6 +67,11 @@ const ptBR: Messages = {
   'heading.cleanup': 'Limpeza',
   'heading.tidy': 'Organizar nota',
   'heading.replacements': 'Substituições salvas',
+  'setting.proHints.name': 'Mostrar dicas do Pro',
+  'setting.proHints.desc': 'De vez em quando, uma linha sobre o Text Case Pro (pago) bem onde ajudaria, no máximo uma vez a cada 14 dias por lugar. Texto fixo: sem rede, sem rastreamento.',
+  'proHint.cleanup': 'Limpa notas como esta uma por uma? O Text Case Pro limpa pastas inteiras ou o cofre todo com receitas salvas, e localiza e substitui em todo o cofre.',
+  'proHint.more': 'Saiba mais',
+  'proHint.off': 'Não mostrar novamente',
 
   // Settings: dropdown options
   'option.systemDefault': 'Padrão do sistema',

@@ -67,6 +67,11 @@ const de: Messages = {
   'heading.cleanup': 'Bereinigung',
   'heading.tidy': 'Notiz aufräumen',
   'heading.replacements': 'Gespeicherte Ersetzungen',
+  'setting.proHints.name': 'Pro-Tipps anzeigen',
+  'setting.proHints.desc': 'Ab und zu eine Zeile über Text Case Pro (kostenpflichtig) genau dort, wo es hilft, höchstens alle 14 Tage pro Stelle. Fester Text: kein Netzwerk, kein Tracking.',
+  'proHint.cleanup': 'Sie bereinigen Notizen wie diese einzeln? Text Case Pro bereinigt ganze Ordner oder den ganzen Vault mit gespeicherten Rezepten und sucht und ersetzt im ganzen Vault.',
+  'proHint.more': 'Mehr erfahren',
+  'proHint.off': 'Nicht mehr anzeigen',
 
   // Settings: dropdown options
   'option.systemDefault': 'Systemstandard',
