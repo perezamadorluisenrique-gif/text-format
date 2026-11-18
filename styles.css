@@ -37,3 +37,8 @@
 .text-format-replacement-error.is-hidden {
   display: none;
 }
+
+/* A naming case that cannot be used for this file, and why. */
+.text-format-blocked {
+  color: var(--text-error);
+}
