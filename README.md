@@ -89,6 +89,38 @@ become. Type a few letters to filter (`snake`, `kebab`), then Enter.
 each sentence. **Capitalize sentences** only raises the opening word, so proper
 nouns you already typed survive.
 
+### From the right-click menu
+
+Right-click in a note (long-press on a phone or tablet) and two entries are
+there: **Text case** (Uppercase, Lowercase, Title case, Sentence case,
+Capitalize each word, Slug and **Change case…** for the rest) and **Cleanup**
+(Tidy note, Join wrapped lines, Remove invisible characters, Straighten quotes
+and dashes, Links to plain text, Sort lines, Remove duplicate lines, Remove
+extra blank lines). Each one does exactly what the command of the same name
+does, on the selection, and is one undo step. Without a selection, Join wrapped
+lines is left out, since one line has nothing to join.
+
+On desktop the two entries open submenus. Obsidian's mobile menu has no real
+submenus, so there each one opens a short searchable list instead. Turn the
+entries off with **Show in the editor menu**.
+
+### Rename a note in another case
+
+**Rename with case…** is in a file's menu (right-click it in the file explorer,
+or the ⋯ menu of an open note), and **Rename note with case…** is a command
+for the active note. Pick Title case, Sentence case, Capitalize each word,
+lowercase, kebab-case, slug, snake_case, camelCase or PascalCase: each row
+shows the new name before anything changes. Only the name changes, never the
+folder or the extension. The rename goes through Obsidian, so links to the note
+are updated as your "Automatically update internal links" setting says (with
+it off, Obsidian asks first).
+
+A case is refused, with the reason on its row, when the new name is already
+taken in that folder (ignoring capitals, since Windows and macOS cannot keep
+`Plan.md` and `plan.md` side by side), or when it would not be a valid file name
+on Windows or Android (`< > : " / \ | ? *`, a trailing dot or space, `CON`,
+`NUL` and the like). It renames one file at a time.
+
 ### Cleanup
 
 | Command | What it does |
@@ -198,6 +230,7 @@ blocks are never removed, and one undo puts everything back.
 | Tidy on paste | Off | Runs the Tidy steps on plain text you paste |
 | Saved replacements | None | Your own find-and-replace commands, described above |
 | Keep image alt text | On | Leaves the description behind when an image becomes plain text |
+| Show in the editor menu | On | Adds Text case and Cleanup to the editor's right-click (long-press) menu |
 | Show Pro tips | On | A one-line tip about Text Case Pro in the Tidy note dialog, after a large cleanup (see **Pro**). Off hides it for good |
 
 ## Scope

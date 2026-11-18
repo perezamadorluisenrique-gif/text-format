@@ -38,6 +38,11 @@
   display: none;
 }
 
+/* A naming case that cannot be used for this file, and why. */
+.text-format-blocked {
+  color: var(--text-error);
+}
+
 /* pro-hint:start (canonical: obsidian-dev/tools/more-plugins/pro-hint.css) */
 .siulved-pro-hint {
 	display: flex;
