@@ -67,6 +67,11 @@ const ja: Messages = {
   'heading.cleanup': 'クリーンアップ',
   'heading.tidy': 'ノートを整形',
   'heading.replacements': '保存した置換',
+  'setting.proHints.name': 'Pro のヒントを表示',
+  'setting.proHints.desc': 'ときどき、役に立つ場面で Text Case Pro（有料）についての一行を表示します。場所ごとに14日に1回まで。固定テキストで、通信も追跡もありません。',
+  'proHint.cleanup': 'このようなノートを1つずつ整理していますか？Text Case Pro なら、保存したレシピでフォルダー全体や保管庫全体を整理でき、保管庫全体での検索と置換もできます。',
+  'proHint.more': '詳しく見る',
+  'proHint.off': '今後は表示しない',
 
   // Settings: dropdown options
   'option.systemDefault': 'システムのデフォルト',

@@ -67,6 +67,11 @@ const ru: Messages = {
   'heading.cleanup': 'Очистка',
   'heading.tidy': 'Привести заметку в порядок',
   'heading.replacements': 'Сохранённые замены',
+  'setting.proHints.name': 'Показывать советы о Pro',
+  'setting.proHints.desc': 'Время от времени одна строка о Text Case Pro (платно) именно там, где это поможет, не чаще одного раза в 14 дней для каждого места. Фиксированный текст: без сети и без отслеживания.',
+  'proHint.cleanup': 'Чистите такие заметки по одной? Text Case Pro очищает целые папки или всё хранилище по сохранённым рецептам, а также ищет и заменяет по всему хранилищу.',
+  'proHint.more': 'Подробнее',
+  'proHint.off': 'Больше не показывать',
 
   // Settings: dropdown options
   'option.systemDefault': 'Как в системе',

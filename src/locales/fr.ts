@@ -67,6 +67,11 @@ const fr: Messages = {
   'heading.cleanup': 'Nettoyage',
   'heading.tidy': 'Mettre la note en ordre',
   'heading.replacements': 'Remplacements enregistrés',
+  'setting.proHints.name': 'Afficher les conseils Pro',
+  'setting.proHints.desc': 'De temps en temps, une ligne sur Text Case Pro (payant) là où il serait utile, au plus une fois tous les 14 jours par endroit. Texte fixe : aucun réseau, aucun suivi.',
+  'proHint.cleanup': 'Vous nettoyez les notes comme celle-ci une par une ? Text Case Pro nettoie des dossiers entiers ou tout le coffre avec des recettes enregistrées, et cherche et remplace dans tout le coffre.',
+  'proHint.more': 'En savoir plus',
+  'proHint.off': 'Ne plus afficher',
 
   // Settings: dropdown options
   'option.systemDefault': 'Valeur par défaut du système',

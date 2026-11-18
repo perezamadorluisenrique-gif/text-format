@@ -67,6 +67,11 @@ const zh: Messages = {
   'heading.cleanup': '清理',
   'heading.tidy': '整理笔记',
   'heading.replacements': '已保存的替换',
+  'setting.proHints.name': '显示 Pro 提示',
+  'setting.proHints.desc': '偶尔在有用的地方显示一行关于 Text Case Pro（付费）的提示，每个位置最多每 14 天一次。固定文本：无网络请求，无跟踪。',
+  'proHint.cleanup': '还在逐个整理这样的笔记？Text Case Pro 可用保存的配方整理整个文件夹或整个库，并在整个库中查找和替换。',
+  'proHint.more': '了解更多',
+  'proHint.off': '不再显示',
 
   // Settings: dropdown options
   'option.systemDefault': '系统默认',

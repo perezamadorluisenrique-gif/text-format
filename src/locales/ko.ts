@@ -67,6 +67,11 @@ const ko: Messages = {
   'heading.cleanup': '정리',
   'heading.tidy': '노트 정리',
   'heading.replacements': '저장된 바꾸기',
+  'setting.proHints.name': 'Pro 팁 표시',
+  'setting.proHints.desc': '가끔, 도움이 될 만한 자리에서 Text Case Pro(유료)에 대한 한 줄을 보여 줍니다. 자리마다 14일에 한 번까지. 고정 텍스트이며 네트워크도 추적도 없습니다.',
+  'proHint.cleanup': '이런 노트를 하나씩 정리하고 계신가요? Text Case Pro는 저장된 레시피로 폴더 전체나 보관함 전체를 정리하고, 보관함 전체에서 찾아 바꾸기도 합니다.',
+  'proHint.more': '자세히 보기',
+  'proHint.off': '다시 표시 안 함',
 
   // Settings: dropdown options
   'option.systemDefault': '시스템 기본값',

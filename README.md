@@ -17,6 +17,12 @@ exception is **Tidy on paste**, which is off until you turn it on.
 
 **Interface languages:** English, 简体中文, 日本語, 한국어, Español, Deutsch, Français, Português (Brasil) and Русский, following Obsidian's language setting. A translation that reads wrong? [Open an issue](https://github.com/perezamadorluisenrique-gif/text-format/issues/new/choose) with the text and what it should say.
 
+## Pro
+
+[Text Case Pro](https://perezamadorluisenrique-gif.github.io/pro/text-case/) is an optional paid companion (one-time payment, 14-day free trial): recipes (named chains of cleanups, case changes and your saved replacements) that clean a whole folder or the vault with a preview first and one undo, paste profiles for text from a PDF or an email, and find and replace across the vault. Everything described above stays free in this plugin, and this plugin never needs Pro.
+
+**Pro tips (static, inside this plugin only).** Text Case and Cleanup shows one line of text about Text Case Pro in one place, its own **Tidy note** dialog (the one that lists what each step would change): only when the selection or note being tidied has 40 lines or more, or 3,000 characters or more, and at most once every 14 days. The text is fixed and ships with the plugin: nothing is loaded from the internet, nothing is counted or sent, and **Learn more** only opens the Pro page in your browser. **Don't show again** on the tip, or the **Show Pro tips** setting, turns it off for good. With **Confirm before tidying** off there is no dialog, so no tip.
+
 ## Installing
 
 In Obsidian, open Settings -> Community plugins -> Browse, search for
@@ -225,6 +231,7 @@ blocks are never removed, and one undo puts everything back.
 | Saved replacements | None | Your own find-and-replace commands, described above |
 | Keep image alt text | On | Leaves the description behind when an image becomes plain text |
 | Show in the editor menu | On | Adds Text case and Cleanup to the editor's right-click (long-press) menu |
+| Show Pro tips | On | A one-line tip about Text Case Pro in the Tidy note dialog, after a large cleanup (see **Pro**). Off hides it for good |
 
 ## Scope
 
@@ -303,6 +310,11 @@ document.
 | [Book Studio](https://obsidian.md/plugins?id=book-studio) | Turn notes into a print-ready paperback PDF and an EPUB 3, entirely on your device. | [book-studio](https://github.com/perezamadorluisenrique-gif/book-studio) |
 | [Emoji Search](https://obsidian.md/plugins?id=emoji-search) | Insert emojis from a searchable picker or by typing a :shortcode. | [emoji-search](https://github.com/perezamadorluisenrique-gif/emoji-search) |
 | [Inline TOC](https://obsidian.md/plugins?id=inline-toc) | Show a live table of contents inside any note with a toc code block, or insert a plain Markdown one. | [inline-toc](https://github.com/perezamadorluisenrique-gif/inline-toc) |
+| [Run Code Blocks](https://obsidian.md/plugins?id=run-code-blocks) | Adds a Run button to code blocks and shows the output right below, for JavaScript, Python, shell and more. | [run-code-blocks](https://github.com/perezamadorluisenrique-gif/run-code-blocks) |
+| [Canvas Finder](https://obsidian.md/plugins?id=canvas-finder) | Fuzzy-search the cards and files on a canvas and jump straight to the match. | [canvas-finder](https://github.com/perezamadorluisenrique-gif/canvas-finder) |
+| [Folder Index Notes](https://obsidian.md/plugins?id=folder-index-notes) | Keeps an index note in each folder up to date with links to the notes and subfolders inside it. | [folder-index-notes](https://github.com/perezamadorluisenrique-gif/folder-index-notes) |
+| [Random Note Filters](https://obsidian.md/plugins?id=random-note-filters) | Open or link a random note from a folder, tag, property or the current search results. | [random-note-filters](https://github.com/perezamadorluisenrique-gif/random-note-filters) |
+| [Split by Heading](https://obsidian.md/plugins?id=split-by-heading) | Split a note into one note per heading, with links back in the source. | [split-by-heading](https://github.com/perezamadorluisenrique-gif/split-by-heading) |
 
 All of them are in the community directory: Settings -> Community plugins ->
 Browse, then search for the name. Demos and install links for every one:
@@ -312,11 +324,18 @@ Browse, then search for the name. Demos and install links for every one:
 
 Optional paid extras, one-time payment. Everything in the free plugins stays free.
 
-- [Book Studio Pro](https://perezamadorluisenrique-gif.github.io/pro/book-studio/): More themes and trim sizes, full cover and KDP preflight for Book Studio.
-- [Section Numbering Pro](https://perezamadorluisenrique-gif.github.io/pro/section-numbering/): Numbering profiles, cross-references and multi-note documents.
-- [Update Radar Pro](https://perezamadorluisenrique-gif.github.io/pro/update-radar/): More control over plugin updates for Update Radar.
+- [Update Radar Pro](https://perezamadorluisenrique-gif.github.io/pro/update-radar/): A copy before every update, undo a whole update session, safe start after a broken update.
+- [Book Studio Pro](https://perezamadorluisenrique-gif.github.io/pro/book-studio/): Genre themes, a back-of-book index, box sets, several editions and a sales kit for Book Studio.
+- [Section Numbering Pro](https://perezamadorluisenrique-gif.github.io/pro/section-numbering/): Numbering profiles, cross-references, multi-note documents and Word export.
+- [Typography Pro](https://perezamadorluisenrique-gif.github.io/pro/typography/): Your own typography profiles and dialogue dashes for Typography as You Type.
+- [Text Case Pro](https://perezamadorluisenrique-gif.github.io/pro/text-case/): Vault-wide find and replace and per-folder recipes for Text Case.
+- [Dataview to Bases Pro](https://perezamadorluisenrique-gif.github.io/pro/dataview-to-bases/): Fixes property types and checks the values before you switch to Bases.
 - [KDP Book Vault](https://perezamadorluisenrique-gif.github.io/pro/kdp-book-vault/): A ready-made book vault for Book Studio, with two sample books.
 - [Thesis and Report Vault](https://perezamadorluisenrique-gif.github.io/pro/thesis-vault/): A thesis and report vault numbered with Section Numbering.
+- [Writer bundle](https://perezamadorluisenrique-gif.github.io/pro/bundles/writer/): Typography Pro and Text Case Pro together.
+- [Author bundle](https://perezamadorluisenrique-gif.github.io/pro/bundles/author/): Book Studio Pro, KDP Book Vault and Typography Pro together.
+- [Academic bundle](https://perezamadorluisenrique-gif.github.io/pro/bundles/academic/): Section Numbering Pro, the Thesis and Report Vault and Typography Pro together.
+- [All Obsidian bundle](https://perezamadorluisenrique-gif.github.io/pro/bundles/all-obsidian/): Every Obsidian Pro and template in one purchase.
 
 Follow new plugins and updates on X: [@luenpereza](https://x.com/luenpereza)
 
